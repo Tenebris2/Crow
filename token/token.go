@@ -16,9 +16,15 @@ const (
 	INT   = "INT"
 
 	// Operators
-	ASSIGN = "="
-	PLUS   = "+"
+	ASSIGN   = "="
+	PLUS     = "+"
+	MINUS    = "-"
+	BANG     = "!"
+	ASTERISK = "*"
+	SLASH    = "/"
 
+	LT = "<"
+	GT = ">"
 	// Delimiters
 	COMMA     = ","
 	SEMICOLON = ";"
@@ -32,11 +38,25 @@ const (
 
 	FUNCTION = "FUNCTION"
 	LET      = "LET"
+
+	IF     = "IF"
+	TRUE   = "TRUE"
+	FALSE  = "FALSE"
+	ELSE   = "ELSE"
+	RETURN = "RETURN"
+
+	EQUAL  = "=="
+	NEQUAL = "!="
 )
 
 var keywords = map[string]TokenType{
-	"fn":  FUNCTION,
-	"let": LET,
+	"fn":     FUNCTION,
+	"let":    LET,
+	"if":     IF,
+	"else":   ELSE,
+	"return": RETURN,
+	"true":   TRUE,
+	"false":  FALSE,
 }
 
 // lookup if it is a specific identification like 'fn' for function or 'let' for let else return ident like "variable_temp"

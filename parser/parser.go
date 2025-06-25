@@ -33,12 +33,15 @@ type Parser struct {
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l, errors: []string{}}
 
+	// prefix
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
 	p.registerPrefixOperators(token.PLUS)
 	p.registerPrefixOperators(token.MINUS)
 	p.registerPrefixOperators(token.BANG)
+
+	// infix
 
 	p.nextToken()
 	p.nextToken()
@@ -52,6 +55,9 @@ func (p *Parser) parseIdentifier() ast.Expression {
 
 func (p *Parser) parsePrefixOperator() ast.Expression {
 	operator := p.curToken
+
+	p.nextToken()
+
 	operand := p.parseExpression(LOWEST)
 	return &ast.PrefixExpression{Token: operator, Operand: operand}
 }
@@ -129,19 +135,25 @@ func (p *Parser) parseStatement() ast.Statement {
 }
 
 // parse statements
-
 func (p *Parser) parseExpression(precedence int) ast.Expression {
+
 	prefix := p.prefixParseFns[p.curToken.Type]
 
+	fmt.Println(p.curToken)
+
 	if prefix == nil {
-		msg := fmt.Sprintf("Cannot find function for %q", p.curToken)
-		p.errors = append(p.errors, msg)
 		return nil
 	}
 
+	// p.nextToken()
+
 	leftExp := prefix()
 
-	p.nextToken()
+	// infix := p.infixParseFns[p.curToken.Type]
+	//
+	// if infix == nil {
+	// 	return nil
+	// }
 
 	return leftExp
 }
@@ -168,6 +180,7 @@ func (p *Parser) parseLetStatement() ast.Statement {
 
 	p.nextToken() // skip current identifier
 	p.nextToken()
+
 	letStmt.Value = p.parseExpression(LOWEST)
 
 	for p.curToken.Type != token.SEMICOLON {

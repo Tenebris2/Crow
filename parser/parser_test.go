@@ -3,6 +3,7 @@ package parser
 import (
 	"interpreter/ast"
 	"interpreter/lexer"
+	"interpreter/token"
 	"testing"
 )
 
@@ -168,7 +169,7 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	}
 }
 
-func TestExpression(t *testing.T) {
+func TestLetStatementAndExpression(t *testing.T) {
 	input := "let foobar = a;"
 
 	l := lexer.New(input)
@@ -200,4 +201,80 @@ func TestExpression(t *testing.T) {
 	if stmtValue.Value != "a" {
 		t.Fatalf("stmtValue.Value is not 'a', got = %q", stmtValue.Value)
 	}
+}
+
+func TestInfixExpression(t *testing.T) {
+	input := "+-!foobar;"
+
+	// curToken = - -> parseExpresssion -> parseprefixOperator, opereator = curToken(-) -> operand = parseExpression
+	// -> parsePrefixOperator, operator = +
+
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	checkParserError(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program has not enough statements. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T",
+			program.Statements[0])
+	}
+
+	prefix_0, ok := stmt.Expression.(*ast.PrefixExpression)
+
+	if !ok {
+		t.Fatalf("expected PrefixExpression , got=%T", stmt.Expression)
+	}
+
+	operator_0 := prefix_0.Token
+
+	if operator_0.Type != token.PLUS {
+		t.Errorf("operator_0.Type expeceted to be '+'. got=%s", operator_0.Type)
+	}
+
+	prefix_1, ok := prefix_0.Operand.(*ast.PrefixExpression)
+
+	if !ok {
+		t.Fatalf("expected PrefixExpression , got=%T", prefix_0.Operand)
+	}
+
+	operator_1 := prefix_1.Token
+
+	if operator_1.Type != token.MINUS {
+		t.Errorf("operator_1.Type expeceted to be '-'. got=%s", operator_1.Type)
+	}
+
+	prefix_2, ok := prefix_1.Operand.(*ast.PrefixExpression)
+
+	if !ok {
+		t.Fatalf("expected PrefixExpression , got=%T", prefix_1.Operand)
+	}
+
+	operator_2 := prefix_2.Token
+
+	if operator_2.Type != token.BANG {
+		t.Errorf("operator_2.Type expeceted to be '-'. got=%s", operator_2.Type)
+	}
+
+	ident, ok := prefix_2.Operand.(*ast.Identifier)
+
+	if !ok {
+		t.Fatalf("exp not *ast.Identifier. got=%T", stmt.Expression)
+	}
+
+	if ident.Value != "foobar" {
+		t.Errorf("ident.Value not %s. got=%s", "foobar", ident.Value)
+	}
+
+	if ident.TokenLiteral() != "foobar" {
+		t.Errorf("ident.TokenLiteral not %s. got=%s", "foobar",
+			ident.TokenLiteral())
+	}
+
 }

@@ -193,6 +193,7 @@ func TestLetStatementAndExpression(t *testing.T) {
 	}
 
 	stmtValue, ok := stmt.Value.(*ast.Identifier)
+
 	if !ok {
 		t.Fatalf("stmtValue is not *ast.Identifier got=%T",
 			stmt.Value)
@@ -203,7 +204,7 @@ func TestLetStatementAndExpression(t *testing.T) {
 	}
 }
 
-func TestInfixExpression(t *testing.T) {
+func TestPrefixExpression(t *testing.T) {
 	input := "+-!foobar;"
 
 	// curToken = - -> parseExpresssion -> parseprefixOperator, opereator = curToken(-) -> operand = parseExpression
@@ -277,4 +278,52 @@ func TestInfixExpression(t *testing.T) {
 			ident.TokenLiteral())
 	}
 
+}
+func TestInfixExpression(t *testing.T) {
+	input := "foobar + barfoo;"
+
+	// curToken = - -> parseExpresssion -> parseprefixOperator, opereator = curToken(-) -> operand = parseExpression
+	// -> parsePrefixOperator, operator = +
+
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	checkParserError(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program has not enough statements. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T",
+			program.Statements[0])
+	}
+
+	infix, ok := stmt.Expression.(*ast.InfixExpression)
+
+	if !ok {
+		t.Fatalf("expected InfixExpression , got=%T", stmt.Expression)
+	}
+
+	left := infix.Left
+
+	if left.String() != "foobar" {
+		t.Errorf("left.String() expeceted to be 'foobar'. got=%s", left.String())
+	}
+
+	operator := infix.Token
+
+	if operator.Type != token.PLUS {
+		t.Errorf("operator.Type expeceted to be '+'. got=%s", operator.Type)
+	}
+
+	right := infix.Right
+
+	if right.String() != "barfoo" {
+
+		t.Errorf("right.String() expeceted to be 'barfoo'. got=%s", right.String())
+	}
 }

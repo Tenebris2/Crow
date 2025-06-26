@@ -35,13 +35,20 @@ func New(l *lexer.Lexer) *Parser {
 
 	// prefix
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
+
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
+
 	p.registerPrefixOperators(token.PLUS)
 	p.registerPrefixOperators(token.MINUS)
 	p.registerPrefixOperators(token.BANG)
 
+	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	// infix
+
+	p.registerInfixOperators(token.PLUS)
+	p.registerInfixOperators(token.MINUS)
+	p.registerInfixOperators(token.BANG)
 
 	p.nextToken()
 	p.nextToken()
@@ -53,6 +60,22 @@ func (p *Parser) parseIdentifier() ast.Expression {
 	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 }
 
+func (p *Parser) parseInfixOperator(left ast.Expression) ast.Expression {
+
+	infix := &ast.InfixExpression{Left: left}
+
+	operator := p.curToken
+
+	infix.Token = operator
+
+	p.nextToken()
+
+	right := p.parseExpression(LOWEST)
+
+	infix.Right = right
+
+	return infix
+}
 func (p *Parser) parsePrefixOperator() ast.Expression {
 	operator := p.curToken
 
@@ -64,6 +87,10 @@ func (p *Parser) parsePrefixOperator() ast.Expression {
 
 func (p *Parser) registerPrefixOperators(tt token.TokenType) {
 	p.registerPrefix(tt, p.parsePrefixOperator)
+}
+
+func (p *Parser) registerInfixOperators(tt token.TokenType) {
+	p.registerInfix(tt, p.parseInfixOperator)
 }
 
 func (p *Parser) nextToken() {
@@ -139,28 +166,34 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 
 	prefix := p.prefixParseFns[p.curToken.Type]
 
-	fmt.Println(p.curToken)
+	fmt.Println("Parsing Prefix Expression: ", p.curToken)
 
 	if prefix == nil {
 		return nil
 	}
 
-	// p.nextToken()
-
 	leftExp := prefix()
 
-	// infix := p.infixParseFns[p.curToken.Type]
-	//
-	// if infix == nil {
-	// 	return nil
-	// }
+	peekExp := p.peekToken
 
-	return leftExp
+	infix := p.infixParseFns[peekExp.Type]
+
+	if infix == nil {
+		return leftExp
+	}
+
+	p.nextToken()
+
+	fmt.Println("Parsing Infix Expression: ", p.curToken)
+
+	return infix(leftExp)
 }
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	stmt := &ast.ExpressionStatement{Token: p.curToken}
 
 	stmt.Expression = p.parseExpression(LOWEST)
+
+	fmt.Printf("Parsing Expression Statement: %q", stmt.Expression)
 
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()

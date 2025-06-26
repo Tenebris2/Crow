@@ -11,12 +11,17 @@ import (
 const (
 	_ int = iota
 	LOWEST
-	EQUALS
-	LESSGREATER
+	ASSIGNMENT
+	CONDITIONAL
 	SUM
 	PRODUCT
+	EXPONENT
 	PREFIX
+	POSTFIX
 	CALL
+	// LOWEST
+	// EQUALS
+	// LESSGREATER
 )
 
 type Parser struct {
@@ -28,6 +33,7 @@ type Parser struct {
 
 	prefixParseFns map[token.TokenType]prefixParseFn
 	infixParseFns  map[token.TokenType]infixParseFn
+	Precedences    map[token.TokenType]int
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -42,13 +48,26 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefixOperators(token.PLUS)
 	p.registerPrefixOperators(token.MINUS)
 	p.registerPrefixOperators(token.BANG)
+	p.registerPrefixOperators(token.ASTERISK)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
+
 	// infix
 
 	p.registerInfixOperators(token.PLUS)
+	p.registerInfixOperators(token.ASSIGN)
+	p.registerInfixOperators(token.ASTERISK)
+	p.registerInfixOperators(token.SLASH)
 	p.registerInfixOperators(token.MINUS)
 	p.registerInfixOperators(token.BANG)
+
+	// precedence
+
+	p.Precedences = map[token.TokenType]int{
+		token.PLUS:     SUM,
+		token.MINUS:    SUM,
+		token.ASTERISK: PRODUCT,
+	}
 
 	p.nextToken()
 	p.nextToken()
@@ -70,7 +89,7 @@ func (p *Parser) parseInfixOperator(left ast.Expression) ast.Expression {
 
 	p.nextToken()
 
-	right := p.parseExpression(LOWEST)
+	right := p.parseExpression(p.getPrecedence(operator.Type))
 
 	infix.Right = right
 
@@ -81,7 +100,7 @@ func (p *Parser) parsePrefixOperator() ast.Expression {
 
 	p.nextToken()
 
-	operand := p.parseExpression(LOWEST)
+	operand := p.parseExpression(p.getPrecedence(operator.Type))
 	return &ast.PrefixExpression{Token: operator, Operand: operand}
 }
 
@@ -166,34 +185,45 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 
 	prefix := p.prefixParseFns[p.curToken.Type]
 
-	fmt.Println("Parsing Prefix Expression: ", p.curToken)
-
 	if prefix == nil {
 		return nil
 	}
 
 	leftExp := prefix()
 
-	peekExp := p.peekToken
+	fmt.Println("Parsing Prefix Expression: ", leftExp)
 
-	infix := p.infixParseFns[peekExp.Type]
+	// precedence example:
+	// a + b * c;
 
-	if infix == nil {
-		return leftExp
+	// prefix identifier a, infix, left = a, operator = +, now at b,
+	fmt.Printf("Precedence of left: %d, Precedence of right: %d\n", precedence, p.getCurrentPrecedence())
+
+	for !p.curTokenIs(token.SEMICOLON) || precedence < p.getCurrentPrecedence() {
+
+		peekExp := p.peekToken
+
+		infix := p.infixParseFns[peekExp.Type]
+
+		if infix == nil {
+			return leftExp
+		}
+
+		p.nextToken()
+
+		leftExp = infix(leftExp)
+
+		fmt.Println("Parsing Infix Expression: ", leftExp)
 	}
 
-	p.nextToken()
-
-	fmt.Println("Parsing Infix Expression: ", p.curToken)
-
-	return infix(leftExp)
+	return leftExp
 }
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	stmt := &ast.ExpressionStatement{Token: p.curToken}
 
 	stmt.Expression = p.parseExpression(LOWEST)
 
-	fmt.Printf("Parsing Expression Statement: %q", stmt.Expression)
+	fmt.Printf("Parsing Expression Statement: %q\n", stmt.Expression)
 
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
@@ -211,8 +241,10 @@ func (p *Parser) parseLetStatement() ast.Statement {
 
 	letStmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 
+	// p.peekError(token.ASSIGN)
+
 	p.nextToken() // skip current identifier
-	p.nextToken()
+	p.nextToken() // skip ASSIGN
 
 	letStmt.Value = p.parseExpression(LOWEST)
 
@@ -263,4 +295,13 @@ func (p *Parser) registerPrefix(tt token.TokenType, fn prefixParseFn) {
 
 func (p *Parser) registerInfix(tt token.TokenType, fn infixParseFn) {
 	p.infixParseFns[tt] = fn
+}
+
+func (p *Parser) getPrecedence(tt token.TokenType) int {
+	return p.Precedences[tt]
+}
+
+func (p *Parser) getCurrentPrecedence() int {
+	fmt.Printf("Precedence of %q", p.peekToken.Type)
+	return p.Precedences[p.peekToken.Type]
 }

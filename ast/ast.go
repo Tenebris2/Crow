@@ -154,7 +154,15 @@ type PrefixExpression struct {
 func (pe *PrefixExpression) TokenLiteral() string {
 	return pe.Token.Literal + pe.Operand.TokenLiteral()
 }
-func (pe *PrefixExpression) String() string  { return pe.Token.Literal + pe.Operand.String() }
+func (pe *PrefixExpression) String() string {
+	var out bytes.Buffer
+	out.WriteString("(")
+	out.WriteString(pe.Token.Literal)
+	out.WriteString(" ")
+	out.WriteString(pe.Operand.String())
+	out.WriteString(")")
+	return pe.Token.Literal + pe.Operand.String()
+}
 func (pe *PrefixExpression) expressionNode() {}
 
 type InfixExpression struct {
@@ -167,6 +175,15 @@ func (ie *InfixExpression) TokenLiteral() string {
 	return ie.Left.TokenLiteral() + ie.Token.Literal + ie.Right.TokenLiteral()
 }
 func (ie *InfixExpression) String() string {
-	return ie.Left.String() + ie.Token.Literal + ie.Right.String()
+	var out bytes.Buffer
+	out.WriteString("(")
+	out.WriteString(ie.Token.Literal)
+	out.WriteString(" ")
+	out.WriteString(ie.Left.String())
+	out.WriteString(" ")
+	out.WriteString(ie.Right.String())
+	out.WriteString(")")
+
+	return out.String()
 }
 func (ie *InfixExpression) expressionNode() {}

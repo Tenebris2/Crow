@@ -327,3 +327,33 @@ func TestInfixExpression(t *testing.T) {
 		t.Errorf("right.String() expeceted to be 'barfoo'. got=%s", right.String())
 	}
 }
+
+func TestInfixPrecedence(t *testing.T) {
+	input := "foobar + barfoo * grubbox;"
+
+	// curToken = - -> parseExpresssion -> parseprefixOperator, opereator = curToken(-) -> operand = parseExpression
+	// -> parsePrefixOperator, operator = +
+
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	checkParserError(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program has not enough statements. got=%d", len(program.Statements))
+	}
+
+	_, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T",
+			program.Statements[0])
+	}
+
+	programString := program.String()
+
+	if programString != "(+ foobar (* barfoo fobar))" {
+		t.Fatalf("Got = %s", programString)
+	}
+}

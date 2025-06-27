@@ -45,6 +45,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
 	p.registerPrefix(token.TRUE, p.parseBooleanExpression)
 	p.registerPrefix(token.FALSE, p.parseBooleanExpression)
+	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
+	p.registerPrefix(token.IF, p.parseConditionalExpression)
 
 	p.registerPrefixOperators(token.PLUS)
 	p.registerPrefixOperators(token.MINUS)
@@ -65,6 +67,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfixOperators(token.EQUAL)
 	p.registerInfixOperators(token.NEQUAL)
 
+	p.registerInfix(token.LPAREN, p.parseCallExpression)
+
 	// precedence
 
 	p.Precedences = map[token.TokenType]int{
@@ -77,6 +81,8 @@ func New(l *lexer.Lexer) *Parser {
 		token.NEQUAL:   EQUALS,
 		token.GT:       LESSGREATER,
 		token.LT:       LESSGREATER,
+		token.LPAREN:   CALL,
+		token.COMMA:    CALL,
 	}
 
 	p.nextToken()
@@ -187,6 +193,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseLetStatement()
 	case token.RETURN:
 		return p.parseReturnStatement()
+	case token.LBRACE:
+		return p.parseBlockStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -319,4 +327,115 @@ func (p *Parser) getCurrentPrecedence() int {
 
 func (p *Parser) parseBooleanExpression() ast.Expression {
 	return &ast.BooleanExpression{Token: p.curToken, Value: p.curTokenIs(token.TRUE)}
+}
+
+func (p *Parser) parseGroupedExpression() ast.Expression {
+	p.nextToken()
+
+	exp := p.parseExpression(LOWEST)
+
+	if !p.peekTokenIs(token.RPAREN) {
+		return nil
+	}
+
+	return exp
+}
+
+func (p *Parser) parseConditionalExpression() ast.Expression {
+	// if CONDITION_EXPRESSION { THEN_BLOCK_STATEMENT } ELSE ELSE_BLOCK_STATEMENT
+	conditionalExp := &ast.ConditionalExpression{Token: p.curToken} // Token = IF
+
+	// parse condition expression
+	p.nextToken()
+
+	condition := p.parseExpression(LOWEST)
+
+	conditionalExp.Condition = condition
+
+	p.nextToken() // move to { to parse BLOCK_STATEMENT
+
+	fmt.Printf("Current token is %s (0)\n", p.curToken.Type)
+
+	// parse THEN BLOCK STATEMENT
+
+	thenStmt := p.parseBlockStatement()
+
+	conditionalExp.ThenStatementBlock = thenStmt
+
+	if !p.expectPeek(token.ELSE) {
+		return conditionalExp
+	}
+
+	p.nextToken() // move to the else statement
+
+	fmt.Printf("Current token is %s (1)\n", p.curToken.Type)
+
+	elseStmt := p.parseBlockStatement()
+
+	conditionalExp.ElseStatementBlock = elseStmt
+
+	return conditionalExp
+}
+
+func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+	p.nextToken()
+
+	blockStmt := &ast.BlockStatement{}
+
+	blockStmt.Token = p.curToken
+
+	statements := []ast.Statement{}
+
+	for !p.curTokenIs(token.RBRACE) {
+		stmt := p.parseStatement()
+
+		if stmt != nil {
+			fmt.Printf("Statement parsing is %v\n", stmt)
+			statements = append(statements, stmt)
+		}
+
+		p.nextToken()
+	}
+
+	blockStmt.Statements = statements
+
+	fmt.Printf("statements are %v\n", statements)
+
+	return blockStmt
+}
+
+func (p *Parser) parseCallExpression(left ast.Expression) ast.Expression {
+	callExp := &ast.CallExpression{Token: p.curToken, Function: left}
+
+	p.nextToken()
+
+	callExp.Arguments = p.parseFunctionArguments()
+
+	return callExp
+}
+
+func (p *Parser) parseFunctionArguments() []ast.Expression {
+	args := []ast.Expression{}
+
+	if p.peekTokenIs(token.RPAREN) {
+		p.nextToken()
+		return args
+	}
+
+	for p.peekTokenIs(token.COMMA) {
+		exp := p.parseExpression(LOWEST)
+
+		args = append(args, exp)
+
+		fmt.Println(args, "123321332")
+
+		p.nextToken()
+		p.nextToken()
+	}
+
+	if !p.peekTokenIs(token.LPAREN) {
+		args = append(args, p.parseExpression(LOWEST))
+	}
+
+	return args
 }

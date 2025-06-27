@@ -211,3 +211,77 @@ func (be *BooleanExpression) TokenLiteral() string {
 func (be *BooleanExpression) String() string {
 	return be.Token.Literal
 }
+
+// Conditional Expression
+
+type ConditionalExpression struct {
+	Token              token.Token // type: IF
+	Condition          Expression
+	ThenStatementBlock *BlockStatement
+	ElseStatementBlock *BlockStatement
+}
+
+type BlockStatement struct {
+	Token      token.Token // type: {
+	Statements []Statement
+}
+
+func (bs *BlockStatement) statementNode() {
+
+}
+
+func (bs *BlockStatement) TokenLiteral() string { return bs.Token.Literal }
+func (bs *BlockStatement) String() string {
+	var out bytes.Buffer
+	out.WriteString("{")
+	for _, stmt := range bs.Statements {
+		out.WriteString(stmt.String())
+	}
+	out.WriteString("}")
+	return out.String()
+}
+func (ce *ConditionalExpression) expressionNode() {
+
+}
+
+func (ce *ConditionalExpression) TokenLiteral() string {
+	var out bytes.Buffer
+	out.WriteString("IF (")
+	out.WriteString(ce.Condition.String())
+	out.WriteString(") THEN ")
+	out.WriteString(ce.ThenStatementBlock.String())
+	out.WriteString(" ELSE ")
+	out.WriteString(ce.ElseStatementBlock.String())
+	return out.String()
+}
+func (ce *ConditionalExpression) String() string {
+	return ce.TokenLiteral()
+}
+
+// Call Expression
+
+type CallExpression struct {
+	Token     token.Token
+	Function  Expression
+	Arguments []Expression
+}
+
+func (ce *CallExpression) expressionNode() {
+
+}
+func (ce *CallExpression) TokenLiteral() string {
+	return ce.Token.Literal
+
+}
+func (ce *CallExpression) String() string {
+	var out bytes.Buffer
+	out.WriteString("CALL ")
+	out.WriteString(ce.Function.String())
+	out.WriteString("(")
+	for _, arg := range ce.Arguments {
+		out.WriteString(arg.String())
+		out.WriteString(", ")
+	}
+	out.WriteString(")")
+	return out.String()
+}

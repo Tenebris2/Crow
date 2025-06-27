@@ -152,7 +152,13 @@ type PrefixExpression struct {
 }
 
 func (pe *PrefixExpression) TokenLiteral() string {
-	return pe.Token.Literal + pe.Operand.TokenLiteral()
+	var out bytes.Buffer
+	out.WriteString("(")
+	out.WriteString(pe.Token.Literal)
+	out.WriteString(" ")
+	out.WriteString(pe.Operand.String())
+	out.WriteString(")")
+	return out.String()
 }
 func (pe *PrefixExpression) String() string {
 	var out bytes.Buffer
@@ -161,7 +167,7 @@ func (pe *PrefixExpression) String() string {
 	out.WriteString(" ")
 	out.WriteString(pe.Operand.String())
 	out.WriteString(")")
-	return pe.Token.Literal + pe.Operand.String()
+	return out.String()
 }
 func (pe *PrefixExpression) expressionNode() {}
 
@@ -187,3 +193,21 @@ func (ie *InfixExpression) String() string {
 	return out.String()
 }
 func (ie *InfixExpression) expressionNode() {}
+
+// boolean expression
+
+type BooleanExpression struct {
+	Token token.Token
+	Value bool
+}
+
+func (be *BooleanExpression) expressionNode() {
+
+}
+
+func (be *BooleanExpression) TokenLiteral() string {
+	return be.Token.Literal
+}
+func (be *BooleanExpression) String() string {
+	return be.Token.Literal
+}

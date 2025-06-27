@@ -329,7 +329,7 @@ func TestInfixExpression(t *testing.T) {
 }
 
 func TestInfixPrecedence(t *testing.T) {
-	input := "foobar + barfoo * grubbox;"
+	input := "foobar + barfoo * grubbox - grub;"
 
 	// curToken = - -> parseExpresssion -> parseprefixOperator, opereator = curToken(-) -> operand = parseExpression
 	// -> parsePrefixOperator, operator = +
@@ -353,7 +353,37 @@ func TestInfixPrecedence(t *testing.T) {
 
 	programString := program.String()
 
-	if programString != "(+ foobar (* barfoo fobar))" {
+	if programString != "(- (+ foobar (* barfoo grubbox)) grub)" {
 		t.Fatalf("Got = %s", programString)
+	}
+}
+
+func TestBooleanExpression(t *testing.T) {
+	input := map[string]string{"true;": "true", "false;": "false"}
+
+	for input, expected := range input {
+		l := lexer.New(input)
+		p := New(l)
+
+		program := p.ParseProgram()
+		checkParserError(t, p)
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program has not enough statements. got=%d", len(program.Statements))
+		}
+
+		_, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+		if !ok {
+			t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T",
+				program.Statements[0])
+		}
+
+		programString := program.String()
+
+		if programString != expected {
+			t.Fatalf("Expected %s, Got = %s", expected, programString)
+		}
+
 	}
 }

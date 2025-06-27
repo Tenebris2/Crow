@@ -11,14 +11,13 @@ import (
 const (
 	_ int = iota
 	LOWEST
-	ASSIGNMENT
-	CONDITIONAL
-	SUM
-	PRODUCT
-	EXPONENT
-	PREFIX
-	POSTFIX
-	CALL
+	EQUALS      // ==
+	LESSGREATER // < or >
+	SUM         // +
+	PRODUCT     // *
+	EXPONENT    // ^
+	PREFIX      // -X or !X
+	CALL        // myFunction(x)
 	// LOWEST
 	// EQUALS
 	// LESSGREATER
@@ -44,6 +43,8 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
+	p.registerPrefix(token.TRUE, p.parseBooleanExpression)
+	p.registerPrefix(token.FALSE, p.parseBooleanExpression)
 
 	p.registerPrefixOperators(token.PLUS)
 	p.registerPrefixOperators(token.MINUS)
@@ -55,11 +56,14 @@ func New(l *lexer.Lexer) *Parser {
 	// infix
 
 	p.registerInfixOperators(token.PLUS)
-	p.registerInfixOperators(token.ASSIGN)
 	p.registerInfixOperators(token.ASTERISK)
 	p.registerInfixOperators(token.SLASH)
 	p.registerInfixOperators(token.MINUS)
 	p.registerInfixOperators(token.BANG)
+	p.registerInfixOperators(token.GT)
+	p.registerInfixOperators(token.LT)
+	p.registerInfixOperators(token.EQUAL)
+	p.registerInfixOperators(token.NEQUAL)
 
 	// precedence
 
@@ -67,6 +71,12 @@ func New(l *lexer.Lexer) *Parser {
 		token.PLUS:     SUM,
 		token.MINUS:    SUM,
 		token.ASTERISK: PRODUCT,
+		token.SLASH:    PRODUCT,
+		token.BANG:     PREFIX,
+		token.EQUAL:    EQUALS,
+		token.NEQUAL:   EQUALS,
+		token.GT:       LESSGREATER,
+		token.LT:       LESSGREATER,
 	}
 
 	p.nextToken()
@@ -101,6 +111,8 @@ func (p *Parser) parsePrefixOperator() ast.Expression {
 	p.nextToken()
 
 	operand := p.parseExpression(p.getPrecedence(operator.Type))
+
+	fmt.Printf("Prefix, Operator: %v, Operand: %v\n", operator, operand)
 	return &ast.PrefixExpression{Token: operator, Operand: operand}
 }
 
@@ -199,7 +211,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	// prefix identifier a, infix, left = a, operator = +, now at b,
 	fmt.Printf("Precedence of left: %d, Precedence of right: %d\n", precedence, p.getCurrentPrecedence())
 
-	for !p.curTokenIs(token.SEMICOLON) || precedence < p.getCurrentPrecedence() {
+	for !p.curTokenIs(token.SEMICOLON) && precedence < p.getCurrentPrecedence() {
 
 		peekExp := p.peekToken
 
@@ -302,6 +314,9 @@ func (p *Parser) getPrecedence(tt token.TokenType) int {
 }
 
 func (p *Parser) getCurrentPrecedence() int {
-	fmt.Printf("Precedence of %q", p.peekToken.Type)
 	return p.Precedences[p.peekToken.Type]
+}
+
+func (p *Parser) parseBooleanExpression() ast.Expression {
+	return &ast.BooleanExpression{Token: p.curToken, Value: p.curTokenIs(token.TRUE)}
 }

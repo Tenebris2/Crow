@@ -3,11 +3,13 @@ package repl
 import (
 	"bufio"
 	"fmt"
+	"interpreter/eval"
 	"interpreter/lexer"
 	"interpreter/parser"
 	"io"
 )
 
+const LOG_MODE = false
 const PROMPT = ">> "
 
 func Start(in io.Reader, out io.Writer) {
@@ -38,6 +40,6 @@ func Start(in io.Reader, out io.Writer) {
 			fmt.Printf("parser error: %q\n", msg)
 		}
 
-		fmt.Printf("%v\n", program.String())
+		fmt.Printf("%v\n", eval.Eval(program).Inspect())
 	}
 }

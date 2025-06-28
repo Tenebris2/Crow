@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"interpreter/ast"
 	"interpreter/lexer"
+	"interpreter/logger"
 	"interpreter/token"
 	"strconv"
 )
@@ -22,6 +23,8 @@ const (
 	// EQUALS
 	// LESSGREATER
 )
+
+var lg = logger.GetInstance()
 
 type Parser struct {
 	l *lexer.Lexer
@@ -118,7 +121,8 @@ func (p *Parser) parsePrefixOperator() ast.Expression {
 
 	operand := p.parseExpression(p.getPrecedence(operator.Type))
 
-	fmt.Printf("Prefix, Operator: %v, Operand: %v\n", operator, operand)
+	lg.Log(fmt.Sprintf("Prefix, Operator: %v, Operand: %v\n", operator, operand))
+
 	return &ast.PrefixExpression{Token: operator, Operand: operand}
 }
 
@@ -211,13 +215,13 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 
 	leftExp := prefix()
 
-	fmt.Println("Parsing Prefix Expression: ", leftExp)
+	lg.Log(fmt.Sprintln("Parsing Prefix Expression: ", leftExp))
 
 	// precedence example:
 	// a + b * c;
 
 	// prefix identifier a, infix, left = a, operator = +, now at b,
-	fmt.Printf("Precedence of left: %d, Precedence of right: %d\n", precedence, p.getCurrentPrecedence())
+	lg.Log(fmt.Sprintf("Precedence of left: %d, Precedence of right: %d\n", precedence, p.getCurrentPrecedence()))
 
 	for !p.curTokenIs(token.SEMICOLON) && precedence < p.getCurrentPrecedence() {
 
@@ -233,7 +237,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 
 		leftExp = infix(leftExp)
 
-		fmt.Println("Parsing Infix Expression: ", leftExp)
+		lg.Log(fmt.Sprintln("Parsing Infix Expression: ", leftExp))
 	}
 
 	return leftExp
@@ -243,7 +247,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 
 	stmt.Expression = p.parseExpression(LOWEST)
 
-	fmt.Printf("Parsing Expression Statement: %v %v\n", stmt.Expression, p.curToken.Type)
+	lg.Log(fmt.Sprintf("Parsing Expression Statement: %v %v\n", stmt.Expression, p.curToken.Type))
 
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
@@ -356,8 +360,6 @@ func (p *Parser) parseConditionalExpression() ast.Expression {
 
 	p.nextToken() // move to { to parse BLOCK_STATEMENT
 
-	fmt.Printf("Current token is %s (0)\n", p.curToken.Type)
-
 	// parse THEN BLOCK STATEMENT
 
 	thenStmt := p.parseBlockStatement()
@@ -369,8 +371,6 @@ func (p *Parser) parseConditionalExpression() ast.Expression {
 	}
 
 	p.nextToken() // move to the else statement
-
-	fmt.Printf("Current token is %s (1)\n", p.curToken.Type)
 
 	elseStmt := p.parseBlockStatement()
 
@@ -392,7 +392,7 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 		stmt := p.parseStatement()
 
 		if stmt != nil {
-			fmt.Printf("Statement parsing is %v\n", stmt)
+			lg.Log(fmt.Sprintf("Statement parsing is %v\n", stmt))
 			statements = append(statements, stmt)
 		}
 
@@ -401,7 +401,7 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 
 	blockStmt.Statements = statements
 
-	fmt.Printf("statements are %v\n", statements)
+	lg.Log(fmt.Sprintf("statements are %v\n", statements))
 
 	return blockStmt
 }
@@ -428,8 +428,6 @@ func (p *Parser) parseFunctionArguments() []ast.Expression {
 		exp := p.parseExpression(LOWEST)
 
 		args = append(args, exp)
-
-		fmt.Println(args, "123321332")
 
 		p.nextToken()
 		p.nextToken()

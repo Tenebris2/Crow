@@ -243,7 +243,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 
 	stmt.Expression = p.parseExpression(LOWEST)
 
-	fmt.Printf("Parsing Expression Statement: %q\n", stmt.Expression)
+	fmt.Printf("Parsing Expression Statement: %v %v\n", stmt.Expression, p.curToken.Type)
 
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
@@ -268,8 +268,8 @@ func (p *Parser) parseLetStatement() ast.Statement {
 
 	letStmt.Value = p.parseExpression(LOWEST)
 
-	for p.curToken.Type != token.SEMICOLON {
-		p.nextToken()
+	if !p.expectPeek(token.SEMICOLON) {
+		return nil
 	}
 
 	return letStmt
@@ -337,6 +337,8 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 	if !p.peekTokenIs(token.RPAREN) {
 		return nil
 	}
+
+	p.nextToken() // consume RPAREN
 
 	return exp
 }
@@ -436,6 +438,8 @@ func (p *Parser) parseFunctionArguments() []ast.Expression {
 	if !p.peekTokenIs(token.LPAREN) {
 		args = append(args, p.parseExpression(LOWEST))
 	}
+
+	p.nextToken() // consume LPAREN
 
 	return args
 }

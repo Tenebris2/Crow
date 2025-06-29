@@ -1,11 +1,14 @@
 package eval
 
 import (
+	"interpreter/environment"
 	"interpreter/lexer"
 	"interpreter/object"
 	"interpreter/parser"
 	"testing"
 )
+
+var env = environment.NewEnvironment()
 
 func TestEvalIntegerExpression(t *testing.T) {
 	tests := []struct {
@@ -17,16 +20,17 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{"-5", -5},
 		{"-10", -10},
 	}
+
 	for _, tt := range tests {
-		evaluated := testEval(tt.input)
+		evaluated := testEval(tt.input, env)
 		testIntegerObject(t, evaluated, tt.expected)
 	}
 }
-func testEval(input string) object.Object {
+func testEval(input string, env *environment.Environment) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
-	return Eval(program)
+	return Eval(program, *env)
 }
 func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
 	result, ok := obj.(*object.Integer)
@@ -60,7 +64,7 @@ func TestEvalBooleanExpression(t *testing.T) {
 		{"(1 > 2) == false", true},
 	}
 	for _, tt := range tests {
-		evaluated := testEval(tt.input)
+		evaluated := testEval(tt.input, env)
 		testBooleanObject(t, evaluated, tt.expected)
 	}
 }
@@ -92,7 +96,7 @@ func TestIfElseExpressions(t *testing.T) {
 		{"if (1 < 2) { 10 } else { 20 }", 10},
 	}
 	for _, tt := range tests {
-		evaluated := testEval(tt.input)
+		evaluated := testEval(tt.input, env)
 		integer, ok := tt.expected.(int)
 		if ok {
 			testIntegerObject(t, evaluated, int64(integer))
@@ -127,7 +131,7 @@ return 1;
 `, 10},
 	}
 	for _, tt := range tests {
-		evaluated := testEval(tt.input)
+		evaluated := testEval(tt.input, env)
 		testIntegerObject(t, evaluated, tt.expected)
 	}
 }

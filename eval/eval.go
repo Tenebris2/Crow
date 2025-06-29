@@ -32,6 +32,13 @@ func Eval(node ast.Node) object.Object {
 		left := Eval(node.Left)
 		right := Eval(node.Right)
 		return evalInfixExpression(left, node.Token.Type, right)
+	case *ast.ConditionalExpression:
+		condition := Eval(node.Condition)
+		thenBlock := node.ThenStatementBlock
+		elseBlock := node.ElseStatementBlock
+		return evalConditionalExpression(condition, thenBlock, elseBlock)
+	case *ast.BlockStatement:
+		return evalStatements(node.Statements)
 	}
 
 	return nil
@@ -141,5 +148,32 @@ func evalBooleanInfixExpression(left object.Object, operator token.TokenType, ri
 		return naiveBoolToBoolean(leftVal != rightVal)
 	default:
 		return NULL
+	}
+}
+
+func evalConditionalExpression(condition object.Object, thenBlock ast.Node, elseBlock ast.Node) object.Object {
+	if isTruth(condition) {
+		return Eval(thenBlock)
+	}
+
+	eb, ok := elseBlock.(*ast.BlockStatement)
+
+	if eb == nil || !ok {
+		return NULL
+	}
+
+	return Eval(elseBlock)
+}
+
+func isTruth(condition object.Object) bool {
+	switch condition {
+	case TRUE:
+		return true
+	case FALSE:
+		return false
+	case NULL:
+		return false
+	default:
+		return true
 	}
 }

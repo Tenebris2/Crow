@@ -108,6 +108,7 @@ return 993322;
 		if returnStmt.TokenLiteral() != "return" {
 			t.Errorf("returnStmt.TokenLiteral not 'return', got %q", returnStmt.TokenLiteral())
 		}
+
 	}
 
 }
@@ -409,7 +410,7 @@ func TestConditionalStatement(t *testing.T) {
 
 	stmt := program.Statements[0]
 
-	if stmt.String() != "IF (a) THEN {let x = 5} ELSE {let x = 6}" {
+	if stmt.String() != "IF (a) THEN {let x = 5; } ELSE {let x = 6; }" {
 		t.Fatalf("Expected, got = %v", stmt.String())
 	}
 }
@@ -437,5 +438,26 @@ func TestCallExpression(t *testing.T) {
 
 	if callExpression.String() != "CALL call(a, b, c, )" {
 		t.Fatalf("Got %q", callExpression.String())
+	}
+}
+
+func TestParseNestedIfExpression(t *testing.T) {
+	input := `
+  if true {
+    if true {
+      return 1
+    }
+
+    return 2
+  }`
+
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	checkParserError(t, p)
+
+	if program.String() != "IF (true) THEN {IF (true) THEN {return 1; }; return 2; }" {
+		t.Fatalf(program.String())
 	}
 }

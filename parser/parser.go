@@ -121,7 +121,7 @@ func (p *Parser) parsePrefixOperator() ast.Expression {
 
 	operand := p.parseExpression(p.getPrecedence(operator.Type))
 
-	lg.Log(fmt.Sprintf("Prefix, Operator: %v, Operand: %v\n", operator, operand))
+	fmt.Printf("Prefix, Operator: %v, Operand: %v\n", operator, operand)
 
 	return &ast.PrefixExpression{Token: operator, Operand: operand}
 }
@@ -192,6 +192,8 @@ func (p *Parser) ParseProgram() *ast.Program {
 // to parse 'let a = 0', Token.LET, Token.IDENT, Token.ASSIGN, token.INT
 
 func (p *Parser) parseStatement() ast.Statement {
+
+	fmt.Println("Parsing current statement is ", p.curToken)
 	switch p.curToken.Type {
 	case token.LET:
 		return p.parseLetStatement()
@@ -207,6 +209,7 @@ func (p *Parser) parseStatement() ast.Statement {
 // parse statements
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 
+	fmt.Println("Parsing current expression is ", p.curToken)
 	prefix := p.prefixParseFns[p.curToken.Type]
 
 	if prefix == nil {
@@ -215,13 +218,10 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 
 	leftExp := prefix()
 
-	lg.Log(fmt.Sprintln("Parsing Prefix Expression: ", leftExp))
-
 	// precedence example:
 	// a + b * c;
 
 	// prefix identifier a, infix, left = a, operator = +, now at b,
-	lg.Log(fmt.Sprintf("Precedence of left: %d, Precedence of right: %d\n", precedence, p.getCurrentPrecedence()))
 
 	for !p.curTokenIs(token.SEMICOLON) && precedence < p.getCurrentPrecedence() {
 
@@ -236,8 +236,6 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		p.nextToken()
 
 		leftExp = infix(leftExp)
-
-		lg.Log(fmt.Sprintln("Parsing Infix Expression: ", leftExp))
 	}
 
 	return leftExp
@@ -246,8 +244,6 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	stmt := &ast.ExpressionStatement{Token: p.curToken}
 
 	stmt.Expression = p.parseExpression(LOWEST)
-
-	lg.Log(fmt.Sprintf("Parsing Expression Statement: %v %v\n", stmt.Expression, p.curToken.Type))
 
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
@@ -281,11 +277,24 @@ func (p *Parser) parseLetStatement() ast.Statement {
 
 func (p *Parser) parseReturnStatement() ast.Statement {
 
+	fmt.Println("NEXT TOKEN BEFORE RETURN STATEMENT IS", p.curToken)
+
 	returnStmt := &ast.ReturnStatement{Token: p.curToken}
 
-	for p.curToken.Type != token.SEMICOLON {
+	p.nextToken()
+
+	returnStmt.ReturnValue = p.parseExpression(LOWEST)
+
+	fmt.Println("NEXT TOKEN BEFORE RETURN STATEMENT IS", p.curToken)
+	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
+
+	fmt.Println("NEXT TOKEN OF RETURN STATEMENT IS", p.curToken)
+	// if !p.peekTokenIs(token.EOF) {
+	// 	p.nextToken()
+	// }
+
 	return returnStmt
 }
 
@@ -348,6 +357,7 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 }
 
 func (p *Parser) parseConditionalExpression() ast.Expression {
+	fmt.Println("Parsing Conditional Expression", p.curToken)
 	// if CONDITION_EXPRESSION { THEN_BLOCK_STATEMENT } ELSE ELSE_BLOCK_STATEMENT
 	conditionalExp := &ast.ConditionalExpression{Token: p.curToken} // Token = IF
 
@@ -358,50 +368,64 @@ func (p *Parser) parseConditionalExpression() ast.Expression {
 
 	conditionalExp.Condition = condition
 
-	p.nextToken() // move to { to parse BLOCK_STATEMENT
+	// move to { to parse BLOCK_STATEMENT
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
 
 	// parse THEN BLOCK STATEMENT
 
 	thenStmt := p.parseBlockStatement()
 
+	fmt.Println("After parsing thenStmt", p.curToken.Type)
+
 	conditionalExp.ThenStatementBlock = thenStmt
 
-	if !p.expectPeek(token.ELSE) {
-		return conditionalExp
+	if p.peekTokenIs(token.ELSE) {
+		p.nextToken()
+		if !p.expectPeek(token.LBRACE) {
+
+			return nil
+		}
+
+		elseStmt := p.parseBlockStatement()
+
+		conditionalExp.ElseStatementBlock = elseStmt
+
 	}
-
-	p.nextToken() // move to the else statement
-
-	elseStmt := p.parseBlockStatement()
-
-	conditionalExp.ElseStatementBlock = elseStmt
 
 	return conditionalExp
 }
 
 func (p *Parser) parseBlockStatement() *ast.BlockStatement {
-	p.nextToken()
-
 	blockStmt := &ast.BlockStatement{}
 
 	blockStmt.Token = p.curToken
 
+	fmt.Printf("Block Statement Token %v\n", p.curToken.Type)
+
 	statements := []ast.Statement{}
 
-	for !p.curTokenIs(token.RBRACE) {
-		stmt := p.parseStatement()
+	// stmt := p.parseStatement()
 
+	// if stmt != nil {
+	// 	fmt.Printf("Statement parsing is %v\n", stmt)
+	// 	statements = append(statements, stmt)
+	// }
+
+	p.nextToken() // skip to first statement
+
+	for !p.curTokenIs(token.RBRACE) && !p.curTokenIs(token.EOF) {
+		stmt := p.parseStatement()
 		if stmt != nil {
-			lg.Log(fmt.Sprintf("Statement parsing is %v\n", stmt))
 			statements = append(statements, stmt)
 		}
 
 		p.nextToken()
+
 	}
 
 	blockStmt.Statements = statements
-
-	lg.Log(fmt.Sprintf("statements are %v\n", statements))
 
 	return blockStmt
 }

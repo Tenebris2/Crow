@@ -236,6 +236,7 @@ func (bs *BlockStatement) String() string {
 	out.WriteString("{")
 	for _, stmt := range bs.Statements {
 		out.WriteString(stmt.String())
+		out.WriteString("; ")
 	}
 	out.WriteString("}")
 	return out.String()
@@ -250,8 +251,10 @@ func (ce *ConditionalExpression) TokenLiteral() string {
 	out.WriteString(ce.Condition.String())
 	out.WriteString(") THEN ")
 	out.WriteString(ce.ThenStatementBlock.String())
-	out.WriteString(" ELSE ")
-	out.WriteString(ce.ElseStatementBlock.String())
+	if ce.ElseStatementBlock != nil {
+		out.WriteString(" ELSE ")
+		out.WriteString(ce.ElseStatementBlock.String())
+	}
 	return out.String()
 }
 func (ce *ConditionalExpression) String() string {

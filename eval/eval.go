@@ -2,6 +2,7 @@ package eval
 
 import (
 	"interpreter/ast"
+	"interpreter/environment"
 	"interpreter/object"
 	"interpreter/token"
 )
@@ -12,43 +13,59 @@ var (
 	FALSE = &object.Boolean{Value: false}
 )
 
-func Eval(node ast.Node) object.Object {
+func Eval(node ast.Node, env environment.Environment) object.Object {
 	switch node := node.(type) {
 	// statements
 	case *ast.Program:
-		return evalStatements(node.Statements)
+		return evalStatements(node.Statements, env)
 	case *ast.LetStatement:
-		return Eval(node.Value)
+		name := node.Name.Value
+		value := Eval(node.Value, env)
+		return evalLetStatement(name, value, env)
 	case *ast.ExpressionStatement:
-		return Eval(node.Expression)
+		return Eval(node.Expression, env)
 	case *ast.PrefixExpression:
-		right := Eval(node.Operand)
+		right := Eval(node.Operand, env)
 		return evalPrefixExpression(node.Token.Type, right)
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *ast.BooleanExpression:
 		return evalBooleanExpression(node.Value)
 	case *ast.InfixExpression:
-		left := Eval(node.Left)
-		right := Eval(node.Right)
+		left := Eval(node.Left, env)
+		right := Eval(node.Right, env)
 		return evalInfixExpression(left, node.Token.Type, right)
 	case *ast.ConditionalExpression:
-		condition := Eval(node.Condition)
+		condition := Eval(node.Condition, env)
 		thenBlock := node.ThenStatementBlock
 		elseBlock := node.ElseStatementBlock
-		return evalConditionalExpression(condition, thenBlock, elseBlock)
+		return evalConditionalExpression(condition, thenBlock, elseBlock, env)
 	case *ast.BlockStatement:
-		return evalStatements(node.Statements)
+		return evalBlockStatement(node.Statements, env)
+	case *ast.ReturnStatement:
+		rv := Eval(node.ReturnValue, env)
+		return &object.ReturnValue{Value: rv}
+	case *ast.Identifier:
+		return evalIdentifier(node.Value, env)
 	}
 
 	return nil
 }
 
-func evalStatements(statements []ast.Statement) object.Object {
+func evalIdentifier(ident string, env environment.Environment) object.Object {
+	return env.Get(ident)
+}
+
+func evalBlockStatement(statements []ast.Statement, env environment.Environment) object.Object {
 	var result object.Object
 	for _, statement := range statements {
 		// todo, environment
-		result = Eval(statement)
+
+		result = Eval(statement, env)
+
+		if result != nil && result.Type() == object.RETURN_VALUE_OBJECT {
+			return result
+		}
 	}
 
 	return result
@@ -151,9 +168,9 @@ func evalBooleanInfixExpression(left object.Object, operator token.TokenType, ri
 	}
 }
 
-func evalConditionalExpression(condition object.Object, thenBlock ast.Node, elseBlock ast.Node) object.Object {
+func evalConditionalExpression(condition object.Object, thenBlock ast.Node, elseBlock ast.Node, env environment.Environment) object.Object {
 	if isTruth(condition) {
-		return Eval(thenBlock)
+		return Eval(thenBlock, env)
 	}
 
 	eb, ok := elseBlock.(*ast.BlockStatement)
@@ -162,7 +179,7 @@ func evalConditionalExpression(condition object.Object, thenBlock ast.Node, else
 		return NULL
 	}
 
-	return Eval(elseBlock)
+	return Eval(elseBlock, env)
 }
 
 func isTruth(condition object.Object) bool {
@@ -176,4 +193,37 @@ func isTruth(condition object.Object) bool {
 	default:
 		return true
 	}
+}
+
+func evalStatements(statements []ast.Statement, env environment.Environment) object.Object {
+	var result object.Object
+	for _, statement := range statements {
+		// todo, environment
+
+		// nhap:
+		// if true {
+		// 	if true {
+		// 		return 2
+		// 	}
+		//
+		// 	return 1
+		// }
+		// final res: 1 -> current implementation
+
+		result = Eval(statement, env)
+
+		if returnValue, ok := result.(*object.ReturnValue); ok {
+			return returnValue.Value
+		}
+	}
+
+	return result
+}
+
+func evalLetStatement(name string, value object.Object, env environment.Environment) object.Object {
+	if env.Get(name) == nil {
+		env.Set(name, value)
+	}
+
+	return value
 }

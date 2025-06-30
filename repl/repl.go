@@ -21,31 +21,28 @@ func Start(in io.Reader, out io.Writer) {
 	for {
 		fmt.Printf(PROMPT)
 		scanned := scanner.Scan()
-
 		if !scanned {
 			return
 		}
-
 		line := scanner.Text()
-
-		if line == "" {
-			continue
-		}
 		l := lexer.New(line)
 		p := parser.New(l)
-
 		program := p.ParseProgram()
-
-		errors := p.Errors()
-
-		if len(errors) != 0 {
-			fmt.Printf("Parser had %d errors\n", len(errors))
+		if len(p.Errors()) != 0 {
+			printParserErrors(out, p.Errors())
+			continue
 		}
-
-		for _, msg := range errors {
-			fmt.Printf("parser error: %q\n", msg)
+		evaluated := eval.Eval(program, env)
+		if evaluated != nil {
+			io.WriteString(out, evaluated.Inspect())
+			io.WriteString(out, "\n")
 		}
-
-		fmt.Printf("%v\n", eval.Eval(program, env).Inspect())
+	}
+}
+func printParserErrors(out io.Writer, errors []string) {
+	io.WriteString(out, "Woops! We ran into some monkey business here!\n")
+	io.WriteString(out, " parser errors:\n")
+	for _, msg := range errors {
+		io.WriteString(out, "\t"+msg+"\n")
 	}
 }

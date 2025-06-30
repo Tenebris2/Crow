@@ -416,7 +416,7 @@ func TestConditionalStatement(t *testing.T) {
 }
 
 func TestCallExpression(t *testing.T) {
-	input := "call(a, b, c);"
+	input := "gruv(a, b, box(c, d));"
 
 	l := lexer.New(input)
 	p := New(l)
@@ -436,7 +436,7 @@ func TestCallExpression(t *testing.T) {
 
 	callExpression := stmt.Expression.(*ast.CallExpression)
 
-	if callExpression.String() != "CALL call(a, b, c, )" {
+	if callExpression.String() != "CALL gruv(a, b, CALL box(c, d, ), )" {
 		t.Fatalf("Got %q, arguments are %v", callExpression.String(), callExpression.Arguments)
 	}
 }
@@ -449,7 +449,8 @@ func TestParseNestedIfExpression(t *testing.T) {
     }
 
     return 2
-  }`
+  }
+  `
 
 	l := lexer.New(input)
 	p := New(l)
@@ -463,14 +464,17 @@ func TestParseNestedIfExpression(t *testing.T) {
 }
 
 func TestParseFunctionExpression(t *testing.T) {
-	input := "let a = fun(x) {x+2;};"
+	input := `
+  let identity = fun(x) { x + y;};
+  identity(5, call(1, 2));
+  `
 	l := lexer.New(input)
 	p := New(l)
 
 	program := p.ParseProgram()
 	checkParserError(t, p)
 
-	if program.String() != "let a = fun(x){(+ x 2); }" {
+	if program.String() != "let identity = fun(x){(+ x y); }CALL identity(5, CALL call(1, 2, ), )" {
 		t.Fatalf(program.String())
 	}
 

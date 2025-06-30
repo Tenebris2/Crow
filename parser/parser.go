@@ -122,8 +122,6 @@ func (p *Parser) parsePrefixOperator() ast.Expression {
 
 	operand := p.parseExpression(p.getPrecedence(operator.Type))
 
-	fmt.Printf("Prefix, Operator: %v, Operand: %v\n", operator, operand)
-
 	return &ast.PrefixExpression{Token: operator, Operand: operand}
 }
 
@@ -149,7 +147,7 @@ func (p *Parser) peekError(t token.TokenType) {
 	p.errors = append(p.errors, msg)
 }
 
-func (p *Parser) reportError(msg string) {
+func (p *Parser) reportError(msg string, tt ...token.TokenType) {
 	p.errors = append(p.errors, msg)
 }
 
@@ -198,7 +196,6 @@ func (p *Parser) ParseProgram() *ast.Program {
 
 func (p *Parser) parseStatement() ast.Statement {
 
-	fmt.Println("Parsing current statement is ", p.curToken)
 	switch p.curToken.Type {
 	case token.LET:
 		return p.parseLetStatement()
@@ -206,6 +203,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseReturnStatement()
 	case token.LBRACE:
 		return p.parseBlockStatement()
+	case token.SEMICOLON:
+		return nil
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -214,7 +213,6 @@ func (p *Parser) parseStatement() ast.Statement {
 // parse statements
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 
-	fmt.Println("Parsing current expression is ", p.curToken)
 	prefix := p.prefixParseFns[p.curToken.Type]
 
 	if prefix == nil {
@@ -273,9 +271,10 @@ func (p *Parser) parseLetStatement() ast.Statement {
 
 	letStmt.Value = p.parseExpression(LOWEST)
 
-	if !p.expectPeek(token.SEMICOLON) {
-		return nil
-	}
+	// if !p.expectPeek(token.SEMICOLON) && !p.expectPeek(token.EOF) {
+	// 	fmt.Println("Expecting Semicolon is getting", p.curToken)
+	// 	return nil
+	// }
 
 	return letStmt
 }
@@ -357,7 +356,6 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 }
 
 func (p *Parser) parseConditionalExpression() ast.Expression {
-	fmt.Println("Parsing Conditional Expression", p.curToken)
 	// if CONDITION_EXPRESSION { THEN_BLOCK_STATEMENT } ELSE ELSE_BLOCK_STATEMENT
 	conditionalExp := &ast.ConditionalExpression{Token: p.curToken} // Token = IF
 
@@ -376,8 +374,6 @@ func (p *Parser) parseConditionalExpression() ast.Expression {
 	// parse THEN BLOCK STATEMENT
 
 	thenStmt := p.parseBlockStatement()
-
-	fmt.Println("After parsing thenStmt", p.curToken.Type)
 
 	conditionalExp.ThenStatementBlock = thenStmt
 
@@ -402,10 +398,6 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 
 	blockStmt.Token = p.curToken
 
-	fmt.Printf("Block Statement Token %v\n", p.curToken.Type)
-
-	statements := []ast.Statement{}
-
 	// stmt := p.parseStatement()
 
 	// if stmt != nil {
@@ -413,29 +405,29 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	// 	statements = append(statements, stmt)
 	// }
 
-	p.nextToken() // skip to first statement
+	p.nextToken()
 
 	for !p.curTokenIs(token.RBRACE) && !p.curTokenIs(token.EOF) {
+
 		stmt := p.parseStatement()
+
 		if stmt != nil {
-			statements = append(statements, stmt)
+			blockStmt.Statements = append(blockStmt.Statements, stmt)
 		}
 
 		p.nextToken()
-
 	}
-
-	blockStmt.Statements = statements
 
 	return blockStmt
 }
 
 func (p *Parser) parseCallExpression(left ast.Expression) ast.Expression {
+
 	callExp := &ast.CallExpression{Token: p.curToken, Function: left}
 
-	p.nextToken()
-
 	callExp.Arguments = p.parseFunctionArguments()
+
+	fmt.Println("CALLING CALL EXPRESSION WITH", callExp)
 
 	return callExp
 }
@@ -443,22 +435,21 @@ func (p *Parser) parseCallExpression(left ast.Expression) ast.Expression {
 func (p *Parser) parseFunctionArguments() []ast.Expression {
 	args := []ast.Expression{}
 
-	if p.curTokenIs(token.RPAREN) {
+	if p.peekTokenIs(token.RPAREN) {
 		p.nextToken()
 		return args
 	}
 
+	p.nextToken()
+
+	args = append(args, p.parseExpression(LOWEST))
+
 	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
 		exp := p.parseExpression(LOWEST)
 
 		args = append(args, exp)
-
-		p.nextToken()
-		p.nextToken()
-	}
-
-	if !p.peekTokenIs(token.LPAREN) {
-		args = append(args, p.parseExpression(LOWEST))
 	}
 
 	p.nextToken() // consume LPAREN
@@ -474,29 +465,33 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 		return args
 	}
 
-	for p.peekTokenIs(token.COMMA) {
-		exp, ok := p.parseExpression(LOWEST).(*ast.Identifier)
+	p.nextToken() // skip to identifier
+	exp := p.parseExpression(LOWEST)
 
-		if !ok {
-			p.reportError("Expected next token to be Identifier, got Non-identifier")
-			return nil
-		}
+	id, ok := exp.(*ast.Identifier)
 
-		args = append(args, exp)
-
-		p.nextToken()
-		p.nextToken()
+	if !ok {
+		p.reportError(fmt.Sprintf("Expected next token to be Identifier, got %s", exp))
+		return nil
 	}
 
-	if !p.peekTokenIs(token.LPAREN) {
+	args = append(args, id)
 
-		exp, ok := p.parseExpression(LOWEST).(*ast.Identifier)
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+
+		exp := p.parseExpression(LOWEST)
+
+		id, ok := exp.(*ast.Identifier)
+
 		if !ok {
-			p.reportError("Expected next token to be Identifier, got Non-identifier")
+			p.reportError(fmt.Sprintf("Expected next token to be Identifier, got %s", exp))
 			return nil
 		}
 
-		args = append(args, exp)
+		args = append(args, id)
+
 	}
 
 	p.nextToken() // consume LPAREN
@@ -506,11 +501,11 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 func (p *Parser) parseFunctionExpression() ast.Expression {
 	function := &ast.FunctionLiteral{Token: p.curToken}
 
-	p.nextToken()
+	p.nextToken() // skip to
 
 	function.Parameters = p.parseFunctionParameters()
 
-	fmt.Println("Current token for parsing function expression is: ", p.curToken)
+	p.nextToken() // move to {
 
 	function.Body = p.parseBlockStatement()
 

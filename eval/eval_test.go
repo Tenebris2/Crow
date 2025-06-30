@@ -153,22 +153,6 @@ func TestFunctionObject(t *testing.T) {
 	}
 }
 
-func TestFunctionApplication(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected int64
-	}{
-		{"let identity = fun(x) { x; }; identity(5);", 5},
-		// {"let identity = fun(x) { return x; }; identity(5);", 5},
-		// {"let double = fun(x) { x * 2; }; double(5);", 10},
-		// {"let add = fun(x, y) { x + y; }; add(5, 5);", 10},
-		// {"let add = fun(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20},
-		// {"fun(x) { x; }(5)", 5},
-	}
-	for _, tt := range tests {
-		testIntegerObject(t, testEval(tt.input), tt.expected)
-	}
-}
 func TestErrorHandling(t *testing.T) {
 	tests := []struct {
 		input           string
@@ -223,5 +207,21 @@ return 1;
 			t.Errorf("wrong error message. expected=%q, got=%q",
 				tt.expectedMessage, errObj.Message)
 		}
+	}
+}
+func TestFunctionApplication(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"let identity = fun(x) { x; }; identity(5);", 5},
+		{"let identity = fun(x) { return x; }; identity(5);", 5},
+		{"let double = fun(x) { x * 2; }; double(5);", 10},
+		{"let add = fun(x, y) { x + y; }; add(5, 5);", 10},
+		{"let add = fun(x, y) { x + y; }; add(5 + 6, add(7, 8));", 26},
+		{"fun(x) { x; }(5)", 5},
+	}
+	for _, tt := range tests {
+		testIntegerObject(t, testEval(tt.input), tt.expected)
 	}
 }

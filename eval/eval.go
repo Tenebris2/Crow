@@ -66,6 +66,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		elseBlock := node.ElseStatementBlock
 		return evalConditionalExpression(condition, thenBlock, elseBlock, env)
 	case *ast.BlockStatement:
+		fmt.Println("block statement called with current block", node.Statements)
 		return evalBlockStatement(node.Statements, env)
 	case *ast.ReturnStatement:
 		rv := Eval(node.ReturnValue, env)
@@ -78,19 +79,24 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.Identifier:
 		return evalIdentifier(node.Value, env)
 	case *ast.CallExpression:
-		arguments := node.Arguments
-
-		fmt.Println("ARGUMENTS ARE", arguments)
 		functionObj := Eval(node.Function, env)
-
 		if isError(functionObj) {
 			return functionObj
 		}
 
-		return evalCallExpression(arguments, functionObj)
+		args := evalExpressions(node.Arguments, env)
+
+		fmt.Printf("Arguments are: [")
+		for _, a := range args {
+			fmt.Printf(", %v", a)
+		}
+		fmt.Printf("]\n")
+
+		return evalCallExpression(functionObj, args)
+	default:
+		return newError("Program has no more statements to parse got %s", node)
 	}
 
-	return newError("Program has no statements to parse")
 }
 
 func evalIdentifier(ident string, env *object.Environment) object.Object {
@@ -251,19 +257,9 @@ func isTruth(condition object.Object) bool {
 
 func evalStatements(statements []ast.Statement, env *object.Environment) object.Object {
 	var result object.Object
+
 	for _, statement := range statements {
 		// todo, environment
-
-		// nhap:
-		// if true {
-		// 	if true {
-		// 		return 2
-		// 	}
-		//
-		// 	return 1
-		// }
-		// final res: 1 -> current implementation
-
 		result = Eval(statement, env)
 
 		switch result := result.(type) {
@@ -278,10 +274,10 @@ func evalStatements(statements []ast.Statement, env *object.Environment) object.
 }
 
 func evalLetStatement(name string, value object.Object, env *object.Environment) object.Object {
+
 	if env.Get(name) == nil {
 		env.Set(name, value)
 	}
-
 	return value
 }
 
@@ -297,30 +293,35 @@ func evalFunctionLiteral(parameters []*ast.Identifier, body *ast.BlockStatement,
 	return function
 }
 
-func evalCallExpression(arguments []ast.Expression, function object.Object) object.Object {
+func evalCallExpression(function object.Object, arguments []object.Object) object.Object {
 
 	functionObj := function.(*object.Function)
 	params := functionObj.Parameters
 
-	if len(arguments) < len(params) {
-		fmt.Println(arguments, params)
-		return newError(
-			"Missing argument")
-	}
+	newEnv := object.NewEnvironment()
 
-	env := object.NewEnvironment()
+	if len(arguments) != len(params) {
+		return newError(
+			"Missing argument with argument = %q and params = %q", arguments, params)
+	}
 
 	for idx, arg := range arguments {
-		value := Eval(arg, env)
-
-		if isError(value) {
-			return value
-		}
-
-		env.Set(params[idx].Value, value)
+		newEnv.Set(params[idx].Value, arg)
 	}
 
-	return Eval(functionObj.Body, env)
+	return Eval(functionObj.Body, newEnv)
+}
+
+func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Object {
+	var result []object.Object
+	for _, e := range exps {
+		evaluated := Eval(e, env)
+		if isError(evaluated) {
+			return []object.Object{evaluated}
+		}
+		result = append(result, evaluated)
+	}
+	return result
 }
 
 // Error handling

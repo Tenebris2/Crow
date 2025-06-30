@@ -39,7 +39,7 @@ return false;
 		{token.LET, "let"},
 		{token.IDENT, "add"},
 		{token.ASSIGN, "="},
-		{token.FUNCTION, "fn"},
+		{token.FUNCTION, "fun"},
 		{token.LPAREN, "("},
 		{token.IDENT, "x"},
 		{token.COMMA, ","},
@@ -117,7 +117,7 @@ return false;
 		tok := l.NextToken()
 
 		if tok.Type != tt.expectedType {
-			t.Fatalf("tests[%d] - tokentype wrong, expected = %q, got = %q, literal = %q", i, tt.expectedType, tok.Type, tok.Literal)
+			t.Fatalf("tests[%d] - tokentype wrong, expected = %q, got = %q, literal = %q", i, tt.expectedType, tok.Type, tok.)
 		}
 
 		if tok.Literal != tt.expectedLiteral {

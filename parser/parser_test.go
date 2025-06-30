@@ -434,10 +434,10 @@ func TestCallExpression(t *testing.T) {
 			program.Statements[0])
 	}
 
-	callExpression := stmt.Expression
+	callExpression := stmt.Expression.(*ast.CallExpression)
 
 	if callExpression.String() != "CALL call(a, b, c, )" {
-		t.Fatalf("Got %q", callExpression.String())
+		t.Fatalf("Got %q, arguments are %v", callExpression.String(), callExpression.Arguments)
 	}
 }
 
@@ -460,4 +460,18 @@ func TestParseNestedIfExpression(t *testing.T) {
 	if program.String() != "IF (true) THEN {IF (true) THEN {return 1; }; return 2; }" {
 		t.Fatalf(program.String())
 	}
+}
+
+func TestParseFunctionExpression(t *testing.T) {
+	input := "let a = fun(x) {x+2;};"
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	checkParserError(t, p)
+
+	if program.String() != "let a = fun(x){(+ x 2); }" {
+		t.Fatalf(program.String())
+	}
+
 }

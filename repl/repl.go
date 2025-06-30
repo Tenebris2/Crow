@@ -3,9 +3,9 @@ package repl
 import (
 	"bufio"
 	"fmt"
-	"interpreter/environment"
 	"interpreter/eval"
 	"interpreter/lexer"
+	"interpreter/object"
 	"interpreter/parser"
 	"io"
 )
@@ -16,7 +16,7 @@ const PROMPT = ">> "
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
 
-	env := environment.NewEnvironment()
+	env := object.NewEnvironment()
 
 	for {
 		fmt.Printf(PROMPT)
@@ -28,6 +28,9 @@ func Start(in io.Reader, out io.Writer) {
 
 		line := scanner.Text()
 
+		if line == "" {
+			continue
+		}
 		l := lexer.New(line)
 		p := parser.New(l)
 
@@ -43,6 +46,6 @@ func Start(in io.Reader, out io.Writer) {
 			fmt.Printf("parser error: %q\n", msg)
 		}
 
-		fmt.Printf("%v\n", eval.Eval(program, *env).Inspect())
+		fmt.Printf("%v\n", eval.Eval(program, env).Inspect())
 	}
 }

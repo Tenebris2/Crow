@@ -50,6 +50,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.FALSE, p.parseBooleanExpression)
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.IF, p.parseConditionalExpression)
+	p.registerPrefix(token.FUNCTION, p.parseFunctionExpression)
 
 	p.registerPrefixOperators(token.PLUS)
 	p.registerPrefixOperators(token.MINUS)
@@ -145,6 +146,10 @@ func (p *Parser) Errors() []string {
 
 func (p *Parser) peekError(t token.TokenType) {
 	msg := fmt.Sprintf("expected next token to be %s, got %s instead.", t, p.peekToken.Type)
+	p.errors = append(p.errors, msg)
+}
+
+func (p *Parser) reportError(msg string) {
 	p.errors = append(p.errors, msg)
 }
 
@@ -277,20 +282,15 @@ func (p *Parser) parseLetStatement() ast.Statement {
 
 func (p *Parser) parseReturnStatement() ast.Statement {
 
-	fmt.Println("NEXT TOKEN BEFORE RETURN STATEMENT IS", p.curToken)
-
 	returnStmt := &ast.ReturnStatement{Token: p.curToken}
 
 	p.nextToken()
 
 	returnStmt.ReturnValue = p.parseExpression(LOWEST)
 
-	fmt.Println("NEXT TOKEN BEFORE RETURN STATEMENT IS", p.curToken)
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
-
-	fmt.Println("NEXT TOKEN OF RETURN STATEMENT IS", p.curToken)
 	// if !p.peekTokenIs(token.EOF) {
 	// 	p.nextToken()
 	// }
@@ -443,7 +443,7 @@ func (p *Parser) parseCallExpression(left ast.Expression) ast.Expression {
 func (p *Parser) parseFunctionArguments() []ast.Expression {
 	args := []ast.Expression{}
 
-	if p.peekTokenIs(token.RPAREN) {
+	if p.curTokenIs(token.RPAREN) {
 		p.nextToken()
 		return args
 	}
@@ -464,4 +464,55 @@ func (p *Parser) parseFunctionArguments() []ast.Expression {
 	p.nextToken() // consume LPAREN
 
 	return args
+}
+
+func (p *Parser) parseFunctionParameters() []*ast.Identifier {
+	args := []*ast.Identifier{}
+
+	if p.peekTokenIs(token.RPAREN) {
+		p.nextToken()
+		return args
+	}
+
+	for p.peekTokenIs(token.COMMA) {
+		exp, ok := p.parseExpression(LOWEST).(*ast.Identifier)
+
+		if !ok {
+			p.reportError("Expected next token to be Identifier, got Non-identifier")
+			return nil
+		}
+
+		args = append(args, exp)
+
+		p.nextToken()
+		p.nextToken()
+	}
+
+	if !p.peekTokenIs(token.LPAREN) {
+
+		exp, ok := p.parseExpression(LOWEST).(*ast.Identifier)
+		if !ok {
+			p.reportError("Expected next token to be Identifier, got Non-identifier")
+			return nil
+		}
+
+		args = append(args, exp)
+	}
+
+	p.nextToken() // consume LPAREN
+
+	return args
+}
+func (p *Parser) parseFunctionExpression() ast.Expression {
+	function := &ast.FunctionLiteral{Token: p.curToken}
+
+	p.nextToken()
+
+	function.Parameters = p.parseFunctionParameters()
+
+	fmt.Println("Current token for parsing function expression is: ", p.curToken)
+
+	function.Body = p.parseBlockStatement()
+
+	return function
 }

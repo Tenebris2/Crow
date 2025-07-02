@@ -92,7 +92,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 		fmt.Printf("]\n")
 
-		return evalCallExpression(functionObj, args)
+		return evalCallExpression(functionObj, args, env)
 	default:
 		return newError("Program has no more statements to parse got %s", node)
 	}
@@ -275,9 +275,7 @@ func evalStatements(statements []ast.Statement, env *object.Environment) object.
 
 func evalLetStatement(name string, value object.Object, env *object.Environment) object.Object {
 
-	if env.Get(name) == nil {
-		env.Set(name, value)
-	}
+	env.Set(name, value)
 	return value
 }
 
@@ -293,12 +291,12 @@ func evalFunctionLiteral(parameters []*ast.Identifier, body *ast.BlockStatement,
 	return function
 }
 
-func evalCallExpression(function object.Object, arguments []object.Object) object.Object {
+func evalCallExpression(function object.Object, arguments []object.Object, env *object.Environment) object.Object {
 
 	functionObj := function.(*object.Function)
 	params := functionObj.Parameters
 
-	newEnv := object.NewEnvironment()
+	newEnv := object.NewEnvironment(env)
 
 	if len(arguments) != len(params) {
 		return newError(

@@ -41,6 +41,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalPrefixExpression(node.Token.Type, right)
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
+	case *ast.StringLiteral:
+		return &object.String{Value: node.Value}
 	case *ast.BooleanExpression:
 		return evalBooleanExpression(node.Value)
 	case *ast.InfixExpression:
@@ -92,7 +94,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 		fmt.Printf("]\n")
 
-		return evalCallExpression(functionObj, args, env)
+		return evalCallExpression(functionObj, args)
 	default:
 		return newError("Program has no more statements to parse got %s", node)
 	}
@@ -181,6 +183,8 @@ func evalInfixExpression(left object.Object, operator token.TokenType, right obj
 		return evalIntegerInfixExpression(left, operator, right)
 	case left.Type() == object.BOOLEAN_OBJECT && right.Type() == object.BOOLEAN_OBJECT:
 		return evalBooleanInfixExpression(left, operator, right)
+	case left.Type() == object.STRING_OBJECT && right.Type() == object.STRING_OBJECT:
+		return evalStringInfixExpression(left, operator, right)
 	case left.Type() != right.Type():
 		return newError("type mismatch: %s %s %s", left.Type(), operator, right.Type())
 	default:
@@ -222,6 +226,25 @@ func evalBooleanInfixExpression(left object.Object, operator token.TokenType, ri
 		return naiveBoolToBoolean(leftVal == rightVal)
 	case token.NEQUAL:
 		return naiveBoolToBoolean(leftVal != rightVal)
+	default:
+		return newError("unknown operator: %s %s %s",
+			left.Type(), operator, right.Type())
+	}
+}
+func evalStringInfixExpression(left object.Object, operator token.TokenType, right object.Object) object.Object {
+	leftVal := left.(*object.String).Value
+	rightVal := right.(*object.String).Value
+	switch operator {
+	case token.PLUS:
+		return &object.String{Value: leftVal + rightVal}
+	case token.EQUAL:
+		return naiveBoolToBoolean(leftVal == rightVal)
+	case token.NEQUAL:
+		return naiveBoolToBoolean(leftVal != rightVal)
+	case token.LT:
+		return naiveBoolToBoolean(leftVal < rightVal)
+	case token.GT:
+		return naiveBoolToBoolean(leftVal > rightVal)
 	default:
 		return newError("unknown operator: %s %s %s",
 			left.Type(), operator, right.Type())
@@ -291,12 +314,12 @@ func evalFunctionLiteral(parameters []*ast.Identifier, body *ast.BlockStatement,
 	return function
 }
 
-func evalCallExpression(function object.Object, arguments []object.Object, env *object.Environment) object.Object {
+func evalCallExpression(function object.Object, arguments []object.Object) object.Object {
 
 	functionObj := function.(*object.Function)
 	params := functionObj.Parameters
 
-	newEnv := object.NewEnvironment(env)
+	newEnv := object.NewEnvironment(functionObj.Env)
 
 	if len(arguments) != len(params) {
 		return newError(
@@ -304,8 +327,13 @@ func evalCallExpression(function object.Object, arguments []object.Object, env *
 	}
 
 	for idx, arg := range arguments {
+		fmt.Printf("Parameters of %v with arg = %v\n", params[idx].Value, arg)
 		newEnv.Set(params[idx].Value, arg)
 	}
+
+	fmt.Println("Current env for function", function.Inspect())
+	newEnv.PrintDbg()
+	functionObj.Env.PrintDbg()
 
 	return Eval(functionObj.Body, newEnv)
 }

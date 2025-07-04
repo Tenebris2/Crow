@@ -13,10 +13,6 @@ type Object interface {
 	Inspect() string
 }
 
-type Integer struct {
-	Value int64
-}
-
 const (
 	INTEGER_OBJECT      = "INTEGER"
 	BOOLEAN_OBJECT      = "BOOLEAN"
@@ -24,7 +20,13 @@ const (
 	RETURN_VALUE_OBJECT = "RETURN"
 	FUNCTION_OBJECT     = "FUNCTION"
 	ERROR_OBJECT        = "ERROR"
+	STRING_OBJECT       = "STRING"
+	BUILTIN_OBJECT      = "BUILTIN"
 )
+
+type Integer struct {
+	Value int64
+}
 
 func (i *Integer) Type() ObjectType {
 	return INTEGER_OBJECT
@@ -106,3 +108,24 @@ func (e *Error) Type() ObjectType {
 func (e *Error) Inspect() string {
 	return "ERROR: " + e.Message
 }
+
+type String struct {
+	Value string
+}
+
+func (i *String) Type() ObjectType {
+	return STRING_OBJECT
+}
+
+func (i *String) Inspect() string {
+	return i.Value
+}
+
+type BuiltinFunction func(args ...Object) Object
+
+type Builtin struct {
+	Fun BuiltinFunction
+}
+
+func (b *Builtin) Type() ObjectType { return BUILTIN_OBJECT }
+func (b *Builtin) Inspect() string  { return "builtin function" }

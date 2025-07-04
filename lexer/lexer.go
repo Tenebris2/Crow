@@ -47,7 +47,6 @@ func (l *Lexer) NextToken() token.Token {
 		} else {
 			tok = newToken(token.ASSIGN, l.ch)
 		}
-
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch)
 	case '(':
@@ -83,6 +82,10 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.GT, l.ch)
 	case '<':
 		tok = newToken(token.LT, l.ch)
+	case '"':
+		str := l.readString()
+		tok.Type = token.STRING
+		tok.Literal = str
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
@@ -140,10 +143,23 @@ func (l *Lexer) skipWhitespace() {
 	}
 }
 
-func (l Lexer) peekChar() byte {
+func (l *Lexer) peekChar() byte {
 	if l.readPosition >= len(l.input) {
 		return 0
 	} else {
 		return l.input[l.readPosition]
 	}
+}
+
+func (l *Lexer) readString() string {
+	l.readChar()
+
+	position := l.position
+
+	for l.ch != '"' && l.ch != 0 {
+		l.readChar()
+	}
+
+	return l.input[position:l.position]
+
 }

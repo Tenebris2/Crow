@@ -523,3 +523,17 @@ func TestParsingArrayLiterals(t *testing.T) {
 	}
 
 }
+
+func TestIndexArray(t *testing.T) {
+	input := "a[0]"
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserError(t, p)
+
+	stmt, _ := program.Statements[0].(*ast.ExpressionStatement)
+	if stmt.String() != "a[0]" {
+		t.Fatalf("stmt.String() expected 'a[0]', got %q", stmt.String())
+	}
+
+}

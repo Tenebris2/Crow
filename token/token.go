@@ -48,6 +48,7 @@ const (
 	FALSE  = "FALSE"
 	ELSE   = "ELSE"
 	RETURN = "RETURN"
+	FOR    = "FOR"
 
 	EQUAL  = "=="
 	NEQUAL = "!="
@@ -61,6 +62,7 @@ var keywords = map[string]TokenType{
 	"return": RETURN,
 	"true":   TRUE,
 	"false":  FALSE,
+	"for":    FOR,
 }
 
 // lookup if it is a specific identification like 'fn' for function or 'let' for let else return ident like "variable_temp"

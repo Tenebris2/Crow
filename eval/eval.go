@@ -99,6 +99,11 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.ArrayLiteral:
 		elements := node.Elements
 		return evalArrayExpression(elements, env)
+	case *ast.IndexExpression:
+		elements := Eval(node.Left, env)
+		index := Eval(node.Index, env)
+
+		return evalIndexExpression(elements, index)
 	default:
 		return newError("Program has no more statements to parse got %s", node)
 	}
@@ -401,4 +406,23 @@ func evalElements(elements []ast.Expression, env *object.Environment) []object.O
 	}
 
 	return objs
+}
+
+func evalIndexExpression(left, index object.Object) object.Object {
+	switch left := left.(type) {
+	case *object.Array:
+		if index, ok := index.(*object.Integer); ok {
+			return left.Elements[index.Value]
+		} else {
+			return newError("index type is not of type INTEGER, got type %s instead", index.Type())
+		}
+	case *object.String:
+		if index, ok := index.(*object.Integer); ok {
+			return &object.String{Value: string(left.Value[index.Value])}
+		} else {
+			return newError("index type is not of type INTEGER, got type %s instead", index.Type())
+		}
+	default:
+		return newError("unsupported type: %s %s", left.Type(), index.Type())
+	}
 }

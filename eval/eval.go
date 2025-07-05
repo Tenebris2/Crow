@@ -30,6 +30,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 		return evalLetStatement(name, value, env)
 	case *ast.ExpressionStatement:
+		fmt.Println("Evaluing,", node.String())
 		return Eval(node.Expression, env)
 	case *ast.PrefixExpression:
 		right := Eval(node.Operand, env)
@@ -95,6 +96,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		fmt.Printf("]\n")
 
 		return evalCallExpression(functionObj, args)
+	case *ast.ArrayLiteral:
+		elements := node.Elements
+		return evalArrayExpression(elements, env)
 	default:
 		return newError("Program has no more statements to parse got %s", node)
 	}
@@ -287,8 +291,8 @@ func isTruth(condition object.Object) bool {
 func evalStatements(statements []ast.Statement, env *object.Environment) object.Object {
 	var result object.Object
 
+	fmt.Println("Evaluing statements", statements)
 	for _, statement := range statements {
-		// todo, environment
 		result = Eval(statement, env)
 
 		switch result := result.(type) {
@@ -363,14 +367,38 @@ func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Ob
 	return result
 }
 
-// Error handling
-
+// Error handling, for creating new errors
 func newError(format string, a ...interface{}) *object.Error {
 	return &object.Error{Message: fmt.Sprintf(format, a...)}
 }
+
+// Error handling, for checking it is correct object type else return an ERROR_OBJECT
 func isError(obj object.Object) bool {
 	if obj != nil {
 		return obj.Type() == object.ERROR_OBJECT
 	}
 	return false
+}
+
+func evalArrayExpression(elements []ast.Expression, env *object.Environment) object.Object {
+
+	arr := &object.Array{}
+
+	// parse elements from Expression to Object
+	elementList := evalElements(elements, env)
+
+	arr.Elements = elementList
+
+	return arr
+}
+
+func evalElements(elements []ast.Expression, env *object.Environment) []object.Object {
+
+	var objs []object.Object
+
+	for _, e := range elements {
+		objs = append(objs, Eval(e, env))
+	}
+
+	return objs
 }

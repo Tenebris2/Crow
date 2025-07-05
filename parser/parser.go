@@ -52,6 +52,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.IF, p.parseConditionalExpression)
 	p.registerPrefix(token.FUNCTION, p.parseFunctionExpression)
+	p.registerPrefix(token.LBRACKET, p.parseArrayExpression)
 
 	p.registerPrefixOperators(token.PLUS)
 	p.registerPrefixOperators(token.MINUS)
@@ -441,28 +442,7 @@ func (p *Parser) parseCallExpression(left ast.Expression) ast.Expression {
 }
 
 func (p *Parser) parseFunctionArguments() []ast.Expression {
-	args := []ast.Expression{}
-
-	if p.peekTokenIs(token.RPAREN) {
-		p.nextToken()
-		return args
-	}
-
-	p.nextToken()
-
-	args = append(args, p.parseExpression(LOWEST))
-
-	for p.peekTokenIs(token.COMMA) {
-		p.nextToken()
-		p.nextToken()
-		exp := p.parseExpression(LOWEST)
-
-		args = append(args, exp)
-	}
-
-	p.nextToken() // consume LPAREN
-
-	return args
+	return p.parseExpressionList(token.RPAREN)
 }
 
 func (p *Parser) parseFunctionParameters() []*ast.Identifier {
@@ -518,4 +498,39 @@ func (p *Parser) parseFunctionExpression() ast.Expression {
 	function.Body = p.parseBlockStatement()
 
 	return function
+}
+
+func (p *Parser) parseArrayExpression() ast.Expression {
+	arr := &ast.ArrayLiteral{Token: p.curToken}
+
+	arr.Elements = p.parseExpressionList(token.RBRACKET)
+
+	return arr
+}
+
+// parse elements in the array and return those elements a list of expressions
+func (p *Parser) parseExpressionList(tt token.TokenType) []ast.Expression {
+	elements := []ast.Expression{}
+
+	if p.peekTokenIs(tt) {
+		p.nextToken()
+		return elements
+	}
+
+	p.nextToken()
+
+	elements = append(elements, p.parseExpression(LOWEST))
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		exp := p.parseExpression(LOWEST)
+
+		elements = append(elements, exp)
+	}
+
+	p.nextToken()
+
+	return elements
+
 }

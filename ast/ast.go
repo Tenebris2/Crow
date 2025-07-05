@@ -367,3 +367,9 @@ func (ie *IndexExpression) String() string {
 
 	return out.String()
 }
+
+type LoopStatement struct {
+	Token          token.Token // type: FOR
+	Condition      Expression
+	StatementBlock *BlockStatement
+}

@@ -305,3 +305,12 @@ func TestArrayLiterals(t *testing.T) {
 	testIntegerObject(t, result.Elements[1], 4)
 	testIntegerObject(t, result.Elements[2], 6)
 }
+func TestArrayIndexing(t *testing.T) {
+	input := "[1, 2 * 2, 3 + 3][0]"
+	evaluated := testEval(input)
+	result, ok := evaluated.(*object.Integer)
+	if !ok {
+		t.Fatalf("object is not Integer. got=%T (%+v)", evaluated, evaluated)
+	}
+	testIntegerObject(t, result, 1)
+}

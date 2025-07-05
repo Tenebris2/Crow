@@ -18,6 +18,7 @@ const (
 	PRODUCT     // *
 	EXPONENT    // ^
 	PREFIX      // -X or !X
+	INDEX       // []
 	CALL        // myFunction(x)
 	// LOWEST
 	// EQUALS
@@ -74,6 +75,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfixOperators(token.NEQUAL)
 
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
+	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
 
 	// precedence
 
@@ -89,6 +91,7 @@ func New(l *lexer.Lexer) *Parser {
 		token.LT:       LESSGREATER,
 		token.LPAREN:   CALL,
 		token.COMMA:    CALL,
+		token.LBRACKET: INDEX,
 	}
 
 	p.nextToken()
@@ -230,6 +233,8 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 
 	leftExp := prefix()
 
+	fmt.Println("HELLO PREFIX DONE", p.curToken, leftExp)
+
 	// precedence example:
 	// a + b * c;
 
@@ -238,6 +243,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	for !p.curTokenIs(token.SEMICOLON) && precedence < p.getCurrentPrecedence() {
 
 		peekExp := p.peekToken
+		fmt.Println("HELLO", peekExp)
 
 		infix := p.infixParseFns[peekExp.Type]
 
@@ -533,4 +539,19 @@ func (p *Parser) parseExpressionList(tt token.TokenType) []ast.Expression {
 
 	return elements
 
+}
+
+func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
+	infix := &ast.IndexExpression{Left: left}
+	infix.Token = p.curToken // LBRACKET
+
+	p.nextToken() // skip to expression
+
+	right := p.parseExpression(p.getPrecedence(infix.Token.Type))
+
+	p.nextToken() // skip past the RBRACKET
+
+	infix.Index = right
+
+	return infix
 }

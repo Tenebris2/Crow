@@ -102,13 +102,19 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 }
 
 func evalIdentifier(ident string, env *object.Environment) object.Object {
-	obj := env.Get(ident)
+	value := env.Get(
+		ident,
+	)
 
-	if obj == nil {
-		return newError("identifier not found " + ident)
+	if value != nil {
+		return value
 	}
 
-	return env.Get(ident)
+	if builtin, ok := builtins[ident]; ok {
+		return builtin
+	}
+
+	return newError("identifier not found " + ident)
 }
 
 func evalBlockStatement(statements []ast.Statement, env *object.Environment) object.Object {
@@ -316,26 +322,33 @@ func evalFunctionLiteral(parameters []*ast.Identifier, body *ast.BlockStatement,
 
 func evalCallExpression(function object.Object, arguments []object.Object) object.Object {
 
-	functionObj := function.(*object.Function)
-	params := functionObj.Parameters
+	switch function := function.(type) {
+	case *object.Function:
+		params := function.Parameters
 
-	newEnv := object.NewEnvironment(functionObj.Env)
+		newEnv := object.NewEnvironment(function.Env)
 
-	if len(arguments) != len(params) {
-		return newError(
-			"Missing argument with argument = %q and params = %q", arguments, params)
+		if len(arguments) != len(params) {
+			return newError(
+				"Missing argument with argument = %q and params = %q", arguments, params)
+		}
+
+		for idx, arg := range arguments {
+			fmt.Printf("Parameters of %v with arg = %v\n", params[idx].Value, arg)
+			newEnv.Set(params[idx].Value, arg)
+		}
+
+		// fmt.Println("Current env for function", function.Inspect())
+		//
+		// newEnv.PrintDbg()
+		// functionObj.Env.PrintDbg()
+
+		return Eval(function.Body, newEnv)
+	case *object.Builtin:
+		return function.Fun(arguments...)
+	default:
+		return newError("not a function %s", function.Type())
 	}
-
-	for idx, arg := range arguments {
-		fmt.Printf("Parameters of %v with arg = %v\n", params[idx].Value, arg)
-		newEnv.Set(params[idx].Value, arg)
-	}
-
-	fmt.Println("Current env for function", function.Inspect())
-	newEnv.PrintDbg()
-	functionObj.Env.PrintDbg()
-
-	return Eval(functionObj.Body, newEnv)
 }
 
 func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Object {

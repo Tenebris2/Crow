@@ -494,3 +494,32 @@ func TestStringLiteralExpression(t *testing.T) {
 		t.Errorf("literal.Value not %q. got=%q", "hello world", literal.Value)
 	}
 }
+func TestParsingArrayLiterals(t *testing.T) {
+	input := "[1, 2 * 2, 3 + 3]"
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserError(t, p)
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	array, ok := stmt.Expression.(*ast.ArrayLiteral)
+	if !ok {
+		t.Fatalf("exp not ast.ArrayLiteral. got=%T", stmt.Expression)
+	}
+	if len(array.Elements) != 3 {
+		t.Fatalf("len(array.Elements) not 3. got=%d", len(array.Elements))
+	}
+	// testIntegerLiteral(t, array.Elements[0], 1)
+
+	if array.Elements[0].String() != "1" {
+		t.Fatalf("array.Elements[0].String() got %q, expected '1'", array.Elements[0].String())
+	}
+
+	if array.Elements[1].String() != "(* 2 2)" {
+		t.Fatalf("array.Elements[0].String() got %q, expected (* 2 2)", array.Elements[1].String())
+	}
+
+	if array.Elements[2].String() != "(+ 3 3)" {
+		t.Fatalf("array.Elements[0].String() got %q, expected (+ 3 3)", array.Elements[2].String())
+	}
+
+}

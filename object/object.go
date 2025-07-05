@@ -22,6 +22,7 @@ const (
 	ERROR_OBJECT        = "ERROR"
 	STRING_OBJECT       = "STRING"
 	BUILTIN_OBJECT      = "BUILTIN"
+	ARRAY_OBJECT        = "ARRAY"
 )
 
 type Integer struct {
@@ -129,3 +130,24 @@ type Builtin struct {
 
 func (b *Builtin) Type() ObjectType { return BUILTIN_OBJECT }
 func (b *Builtin) Inspect() string  { return "builtin function" }
+
+type Array struct {
+	Elements []Object
+}
+
+func (a *Array) Type() ObjectType {
+	return ARRAY_OBJECT
+}
+
+func (a *Array) Inspect() string {
+	var out bytes.Buffer
+
+	out.WriteString("[")
+	for _, e := range a.Elements {
+		out.WriteString(e.Inspect())
+		out.WriteString(", ")
+	}
+
+	out.WriteString("]")
+	return out.String()
+}

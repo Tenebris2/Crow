@@ -235,8 +235,6 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 
 	leftExp := prefix()
 
-	fmt.Println("HELLO PREFIX DONE", p.curToken, leftExp)
-
 	// precedence example:
 	// a + b * c;
 
@@ -245,7 +243,6 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	for !p.curTokenIs(token.SEMICOLON) && precedence < p.getCurrentPrecedence() {
 
 		peekExp := p.peekToken
-		fmt.Println("HELLO", peekExp)
 
 		infix := p.infixParseFns[peekExp.Type]
 
@@ -467,8 +464,6 @@ func (p *Parser) parseCallExpression(left ast.Expression) ast.Expression {
 	callExp := &ast.CallExpression{Token: p.curToken, Function: left}
 
 	callExp.Arguments = p.parseFunctionArguments()
-
-	fmt.Println("CALLING CALL EXPRESSION WITH", callExp)
 
 	return callExp
 }

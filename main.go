@@ -45,9 +45,7 @@ func main() {
 			fmt.Println(msg)
 		}
 
-		evaluated := eval.Eval(program, env).Inspect()
-
-		fmt.Println(evaluated)
+		eval.Eval(program, env)
 	}
 
 }

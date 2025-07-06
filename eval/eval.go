@@ -30,7 +30,6 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 		return evalLetStatement(name, value, env)
 	case *ast.ExpressionStatement:
-		fmt.Println("Evaluing,", node.String())
 		return Eval(node.Expression, env)
 	case *ast.PrefixExpression:
 		right := Eval(node.Operand, env)
@@ -70,7 +69,6 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		elseBlock := node.ElseStatementBlock
 		return evalConditionalExpression(condition, thenBlock, elseBlock, env)
 	case *ast.BlockStatement:
-		fmt.Println("block statement called with current block", node.Statements)
 		return evalBlockStatement(node.Statements, env)
 	case *ast.ReturnStatement:
 		rv := Eval(node.ReturnValue, env)
@@ -89,12 +87,6 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 
 		args := evalExpressions(node.Arguments, env)
-
-		fmt.Printf("Arguments are: [")
-		for _, a := range args {
-			fmt.Printf(", %v", a)
-		}
-		fmt.Printf("]\n")
 
 		return evalCallExpression(functionObj, args)
 	case *ast.ArrayLiteral:
@@ -299,7 +291,6 @@ func isTruth(condition object.Object) bool {
 func evalStatements(statements []ast.Statement, env *object.Environment) object.Object {
 	var result object.Object
 
-	fmt.Println("Evaluing statements", statements)
 	for _, statement := range statements {
 		result = Eval(statement, env)
 
@@ -346,12 +337,9 @@ func evalCallExpression(function object.Object, arguments []object.Object) objec
 		}
 
 		for idx, arg := range arguments {
-			fmt.Printf("Parameters of %v with arg = %v\n", params[idx].Value, arg)
 			newEnv.Set(params[idx].Value, arg)
 		}
 
-		// fmt.Println("Current env for function", function.Inspect())
-		//
 		// newEnv.PrintDbg()
 		// functionObj.Env.PrintDbg()
 

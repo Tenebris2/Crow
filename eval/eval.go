@@ -52,6 +52,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if isError(left) {
 			return left
 		}
+
 		right := Eval(node.Right, env)
 		if isError(right) {
 			return right
@@ -104,6 +105,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		index := Eval(node.Index, env)
 
 		return evalIndexExpression(elements, index)
+	case *ast.LoopStatement:
+		return evalLoopStatement(node.Condition, node.StatementBlock, env)
 	default:
 		return newError("Program has no more statements to parse got %s", node)
 	}
@@ -432,4 +435,22 @@ func unwrapReturnValue(obj object.Object) object.Object {
 		return returnValue.Value
 	}
 	return obj
+}
+
+func evalLoopStatement(condition ast.Expression, function *ast.BlockStatement, env *object.Environment) object.Object {
+
+	var result object.Object
+
+	for isTruth(Eval(condition, env)) {
+		result = Eval(function, env)
+
+		if result != nil {
+			rt := result.Type()
+			if rt == object.RETURN_VALUE_OBJECT || rt == object.ERROR_OBJECT {
+				return result
+			}
+		}
+	}
+
+	return result
 }

@@ -215,6 +215,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseReturnStatement()
 	case token.LBRACE:
 		return p.parseBlockStatement()
+	case token.FOR:
+		return p.parseLoopStatement()
 	case token.SEMICOLON:
 		return nil
 	default:
@@ -368,6 +370,30 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 	p.nextToken() // consume RPAREN
 
 	return exp
+}
+func (p *Parser) parseLoopStatement() ast.Statement {
+	// if CONDITION_EXPRESSION { THEN_BLOCK_STATEMENT } ELSE ELSE_BLOCK_STATEMENT
+	loopStatement := &ast.LoopStatement{Token: p.curToken} // Token = FOR
+
+	// consume token FOR
+	p.nextToken()
+
+	condition := p.parseExpression(LOWEST)
+
+	loopStatement.Condition = condition
+
+	// move to { to parse BLOCK_STATEMENT
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
+
+	// parse THEN BLOCK STATEMENT
+
+	block := p.parseBlockStatement()
+
+	loopStatement.StatementBlock = block
+
+	return loopStatement
 }
 
 func (p *Parser) parseConditionalExpression() ast.Expression {

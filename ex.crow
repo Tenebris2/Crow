@@ -1,0 +1,13 @@
+let a = [5, 2, 3, 1];
+
+let swap = fun(a, i, j) {
+  let temp = a[i];
+  let a[i] = a[j];
+  let a[j] = temp;
+
+  return a;
+}
+
+let a = swap(a, 0, 1)
+a;
+

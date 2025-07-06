@@ -537,3 +537,21 @@ func TestIndexArray(t *testing.T) {
 	}
 
 }
+
+func TestLoopStatement(t *testing.T) {
+	input := `
+  for a > 9 {
+    let a = a + 1
+  }
+  `
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserError(t, p)
+
+	stmt, _ := program.Statements[0].(*ast.LoopStatement)
+	if stmt.String() != "for (> a 9) {let a = (+ a 1); }" {
+		t.Fatalf("stmt.String() expected 'for (> a 9) {let a = (+ a 1); }', got %q", stmt.String())
+	}
+
+}

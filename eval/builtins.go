@@ -1,6 +1,9 @@
 package eval
 
-import "interpreter/object"
+import (
+	"fmt"
+	"interpreter/object"
+)
 
 var builtins = map[string]*object.Builtin{
 	"len": &object.Builtin{
@@ -14,10 +17,20 @@ var builtins = map[string]*object.Builtin{
 				strLen := int64(len(arg.Value))
 
 				return &object.Integer{Value: strLen}
+			case *object.Array:
+				return &object.Integer{Value: int64(len(arg.Elements))}
 			default:
 				return newError("argument to `len` not supported, got %s",
 					args[0].Type())
 			}
+		},
+	},
+	"print": &object.Builtin{
+		Fun: func(args ...object.Object) object.Object {
+			for _, arg := range args {
+				fmt.Println(arg.Inspect())
+			}
+			return NULL
 		},
 	},
 }

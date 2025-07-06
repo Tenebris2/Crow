@@ -373,3 +373,16 @@ type LoopStatement struct {
 	Condition      Expression
 	StatementBlock *BlockStatement
 }
+
+func (ls *LoopStatement) statementNode()       {}
+func (ls *LoopStatement) TokenLiteral() string { return ls.Token.Literal }
+func (ls *LoopStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("for ")
+	out.WriteString(ls.Condition.String())
+	out.WriteString(" ")
+	out.WriteString(ls.StatementBlock.String())
+
+	return out.String()
+}

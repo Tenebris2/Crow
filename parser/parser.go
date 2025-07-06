@@ -215,6 +215,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseReturnStatement()
 	case token.LBRACE:
 		return p.parseBlockStatement()
+	case token.FOR:
+		return p.parseLoopStatement()
 	case token.SEMICOLON:
 		return nil
 	default:
@@ -233,8 +235,6 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 
 	leftExp := prefix()
 
-	fmt.Println("HELLO PREFIX DONE", p.curToken, leftExp)
-
 	// precedence example:
 	// a + b * c;
 
@@ -243,7 +243,6 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	for !p.curTokenIs(token.SEMICOLON) && precedence < p.getCurrentPrecedence() {
 
 		peekExp := p.peekToken
-		fmt.Println("HELLO", peekExp)
 
 		infix := p.infixParseFns[peekExp.Type]
 
@@ -369,6 +368,30 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 
 	return exp
 }
+func (p *Parser) parseLoopStatement() ast.Statement {
+	// if CONDITION_EXPRESSION { THEN_BLOCK_STATEMENT } ELSE ELSE_BLOCK_STATEMENT
+	loopStatement := &ast.LoopStatement{Token: p.curToken} // Token = FOR
+
+	// consume token FOR
+	p.nextToken()
+
+	condition := p.parseExpression(LOWEST)
+
+	loopStatement.Condition = condition
+
+	// move to { to parse BLOCK_STATEMENT
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
+
+	// parse THEN BLOCK STATEMENT
+
+	block := p.parseBlockStatement()
+
+	loopStatement.StatementBlock = block
+
+	return loopStatement
+}
 
 func (p *Parser) parseConditionalExpression() ast.Expression {
 	// if CONDITION_EXPRESSION { THEN_BLOCK_STATEMENT } ELSE ELSE_BLOCK_STATEMENT
@@ -441,8 +464,6 @@ func (p *Parser) parseCallExpression(left ast.Expression) ast.Expression {
 	callExp := &ast.CallExpression{Token: p.curToken, Function: left}
 
 	callExp.Arguments = p.parseFunctionArguments()
-
-	fmt.Println("CALLING CALL EXPRESSION WITH", callExp)
 
 	return callExp
 }

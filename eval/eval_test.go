@@ -314,3 +314,21 @@ func TestArrayIndexing(t *testing.T) {
 	}
 	testIntegerObject(t, result, 1)
 }
+func TestLoopStatements(t *testing.T) {
+	input := `
+  let a = 0;
+
+  for a < 10 {
+    let a = a + 1;
+  }
+
+  a;
+  `
+
+	evaluated := testEval(input)
+	result, ok := evaluated.(*object.Integer)
+	if !ok {
+		t.Fatalf("object is not Integer. got=%T (%+v)", evaluated, evaluated)
+	}
+	testIntegerObject(t, result, 10)
+}

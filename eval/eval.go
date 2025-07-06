@@ -352,7 +352,8 @@ func evalCallExpression(function object.Object, arguments []object.Object) objec
 		// newEnv.PrintDbg()
 		// functionObj.Env.PrintDbg()
 
-		return Eval(function.Body, newEnv)
+		evaluated := Eval(function.Body, newEnv)
+		return unwrapReturnValue(evaluated)
 	case *object.Builtin:
 		return function.Fun(arguments...)
 	default:
@@ -425,4 +426,10 @@ func evalIndexExpression(left, index object.Object) object.Object {
 	default:
 		return newError("unsupported type: %s %s", left.Type(), index.Type())
 	}
+}
+func unwrapReturnValue(obj object.Object) object.Object {
+	if returnValue, ok := obj.(*object.ReturnValue); ok {
+		return returnValue.Value
+	}
+	return obj
 }

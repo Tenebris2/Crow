@@ -386,3 +386,21 @@ func (ls *LoopStatement) String() string {
 
 	return out.String()
 }
+
+type AssignExpression struct {
+	Token         token.Token // type: IDENT
+	Identifier    Expression
+	AssignedValue Expression
+}
+
+func (ls *AssignExpression) expressionNode()      {}
+func (ls *AssignExpression) TokenLiteral() string { return ls.Token.Literal }
+func (ls *AssignExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(ls.Identifier.String())
+	out.WriteString(" = ")
+	out.WriteString(ls.AssignedValue.String())
+
+	return out.String()
+}

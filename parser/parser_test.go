@@ -555,3 +555,20 @@ func TestLoopStatement(t *testing.T) {
 	}
 
 }
+
+func TestAssignStatement(t *testing.T) {
+	input := `
+	let a = 0;
+	a = 1;
+ `
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserError(t, p)
+
+	stmt := program.Statements[1]
+	if stmt.String() != "a = 1" {
+		t.Fatalf("stmt.String() expected 'a = 1', got %q", stmt.String())
+	}
+
+}

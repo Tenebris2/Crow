@@ -18,8 +18,9 @@ const (
 	PRODUCT     // *
 	EXPONENT    // ^
 	PREFIX      // -X or !X
-	INDEX       // []
-	CALL        // myFunction(x)
+	ASSIGN
+	INDEX // []
+	CALL  // myFunction(x)
 	// LOWEST
 	// EQUALS
 	// LESSGREATER
@@ -76,6 +77,7 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
+	p.registerInfix(token.ASSIGN, p.parseAssignExpression)
 
 	// precedence
 
@@ -92,6 +94,7 @@ func New(l *lexer.Lexer) *Parser {
 		token.LPAREN:   CALL,
 		token.COMMA:    CALL,
 		token.LBRACKET: INDEX,
+		token.ASSIGN:   ASSIGN,
 	}
 
 	p.nextToken()
@@ -235,6 +238,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 
 	leftExp := prefix()
 
+	fmt.Println("Parsing prefix: ", leftExp)
 	// precedence example:
 	// a + b * c;
 
@@ -250,6 +254,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 			return leftExp
 		}
 
+		fmt.Println("Parsing infix of type ", peekExp.Type)
 		p.nextToken()
 
 		leftExp = infix(leftExp)
@@ -575,4 +580,16 @@ func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 	infix.Index = right
 
 	return infix
+}
+
+func (p *Parser) parseAssignExpression(left ast.Expression) ast.Expression {
+	assignedStmt := &ast.AssignExpression{Token: p.curToken, Identifier: left}
+
+	fmt.Println("CALLING", p.curToken, left)
+
+	p.nextToken() // skip to identifier
+
+	assignedStmt.AssignedValue = p.parseExpression(ASSIGN)
+
+	return assignedStmt
 }

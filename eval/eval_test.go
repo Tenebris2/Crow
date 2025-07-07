@@ -1,9 +1,9 @@
 package eval
 
 import (
-	"interpreter/lexer"
-	"interpreter/object"
-	"interpreter/parser"
+	"crow/lexer"
+	"crow/object"
+	"crow/parser"
 	"testing"
 )
 

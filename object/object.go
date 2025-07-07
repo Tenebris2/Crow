@@ -2,8 +2,8 @@ package object
 
 import (
 	"bytes"
+	"crow/ast"
 	"fmt"
-	"interpreter/ast"
 	"strings"
 )
 

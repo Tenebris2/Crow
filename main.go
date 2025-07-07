@@ -1,12 +1,12 @@
 package main
 
 import (
+	"crow/eval"
+	"crow/lexer"
+	"crow/object"
+	"crow/parser"
+	"crow/repl"
 	"fmt"
-	"interpreter/eval"
-	"interpreter/lexer"
-	"interpreter/object"
-	"interpreter/parser"
-	"interpreter/repl"
 	"os"
 	"os/user"
 )

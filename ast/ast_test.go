@@ -1,8 +1,8 @@
 package ast
 
 import (
-	// "interpreter/ast"
-	"interpreter/token"
+	// "crow/ast"
+	"crow/token"
 	"testing"
 )
 

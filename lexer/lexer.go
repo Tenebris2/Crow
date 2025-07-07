@@ -1,7 +1,7 @@
 package lexer
 
 import (
-	"interpreter/token"
+	"crow/token"
 )
 
 // The lexer now takes in a file, read raw bytes out of it, then sequentially and iteratively read each char, then tokenize it using `NextToken`

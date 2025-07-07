@@ -2,11 +2,11 @@ package repl
 
 import (
 	"bufio"
+	"crow/eval"
+	"crow/lexer"
+	"crow/object"
+	"crow/parser"
 	"fmt"
-	"interpreter/eval"
-	"interpreter/lexer"
-	"interpreter/object"
-	"interpreter/parser"
 	"io"
 )
 

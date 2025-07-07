@@ -1,8 +1,8 @@
 package eval
 
 import (
+	"crow/object"
 	"fmt"
-	"interpreter/object"
 )
 
 var builtins = map[string]*object.Builtin{

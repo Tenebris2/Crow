@@ -1,9 +1,9 @@
 package parser
 
 import (
-	"interpreter/ast"
-	"interpreter/lexer"
-	"interpreter/token"
+	"crow/ast"
+	"crow/lexer"
+	"crow/token"
 	"testing"
 )
 

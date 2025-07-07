@@ -1,11 +1,11 @@
 package parser
 
 import (
+	"crow/ast"
+	"crow/lexer"
+	"crow/logger"
+	"crow/token"
 	"fmt"
-	"interpreter/ast"
-	"interpreter/lexer"
-	"interpreter/logger"
-	"interpreter/token"
 	"strconv"
 )
 

@@ -1,10 +1,10 @@
 package eval
 
 import (
+	"crow/ast"
+	"crow/object"
+	"crow/token"
 	"fmt"
-	"interpreter/ast"
-	"interpreter/object"
-	"interpreter/token"
 )
 
 var (

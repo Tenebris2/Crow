@@ -29,6 +29,15 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 
 		return evalLetStatement(name, value, env)
+	case *ast.AssignExpression:
+		name := node.Identifier.Value
+		value := Eval(node.AssignedValue, env)
+
+		if isError(value) {
+			return value
+		}
+
+		return evalAssignment(name, value, env)
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression, env)
 	case *ast.PrefixExpression:
@@ -306,7 +315,6 @@ func evalStatements(statements []ast.Statement, env *object.Environment) object.
 }
 
 func evalLetStatement(name string, value object.Object, env *object.Environment) object.Object {
-
 	env.Set(name, value)
 	return value
 }
@@ -441,4 +449,14 @@ func evalLoopStatement(condition ast.Expression, function *ast.BlockStatement, e
 	}
 
 	return result
+}
+
+func evalAssignment(name string, value object.Object, env *object.Environment) object.Object {
+	if env.Get(name) != nil {
+		env.Set(name, value)
+
+		return value
+	}
+
+	return newError("identifier %s not initialized: ", name)
 }

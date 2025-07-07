@@ -1,17 +1,5 @@
 let a = [5, 2, 3, 1];
 
-let swap = fun(x, y) {
-  return [y, x]
-}
+a[1] = 2;
 
-let x = 5;
-let y = 6;
-
-let x = swap(x, y)[0]
-let y = swap(x, y)[1]
-
-x;
-
-for x > 0 {
-  let x = x - 1;
-}
+print(a);

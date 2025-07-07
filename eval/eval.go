@@ -30,7 +30,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 		return evalLetStatement(name, value, env)
 	case *ast.AssignExpression:
-		name := node.Identifier.Value
+		name := node.Identifier
 		value := Eval(node.AssignedValue, env)
 
 		if isError(value) {
@@ -412,6 +412,7 @@ func evalIndexExpression(left, index object.Object) object.Object {
 	switch left := left.(type) {
 	case *object.Array:
 		if index, ok := index.(*object.Integer); ok {
+			fmt.Println("Yo what is up", &left.Elements[index.Value])
 			return left.Elements[index.Value]
 		} else {
 			return newError("index type is not of type INTEGER, got type %s instead", index.Type())
@@ -451,12 +452,35 @@ func evalLoopStatement(condition ast.Expression, function *ast.BlockStatement, e
 	return result
 }
 
-func evalAssignment(name string, value object.Object, env *object.Environment) object.Object {
-	if env.Get(name) != nil {
-		env.Set(name, value)
+func evalAssignment(left ast.Expression, value object.Object, env *object.Environment) object.Object {
 
-		return value
+	switch left := left.(type) {
+	case *ast.Identifier:
+		name := left.Value
+		if env.Get(name) != nil {
+			env.Set(name, value)
+
+			return value
+		}
+	case *ast.IndexExpression:
+		return evalAssignmentIndex(Eval(left.Left, env), Eval(left.Index, env), value)
 	}
 
-	return newError("identifier %s not initialized: ", name)
+	return newError("Error in assigment")
+}
+
+func evalAssignmentIndex(left, index, value object.Object) object.Object {
+	switch left := left.(type) {
+	case *object.Array:
+		if index, ok := index.(*object.Integer); ok {
+			left.Elements[index.Value] = value
+
+			return value
+		} else {
+			return newError("index type is not of type INTEGER, got type %s instead", index.Type())
+		}
+	default:
+		return newError("unsupported type for assignment: %s %s", left.Type(), index.Type())
+	}
+
 }

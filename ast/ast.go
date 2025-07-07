@@ -389,7 +389,7 @@ func (ls *LoopStatement) String() string {
 
 type AssignExpression struct {
 	Token         token.Token // type: IDENT
-	Identifier    *Identifier
+	Identifier    Expression
 	AssignedValue Expression
 }
 

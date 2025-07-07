@@ -585,16 +585,9 @@ func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 func (p *Parser) parseAssignExpression(left ast.Expression) ast.Expression {
 	assignedStmt := &ast.AssignExpression{Token: p.curToken}
 
-	left_, ok := left.(*ast.Identifier)
-
-	if !ok {
-		p.reportError(fmt.Sprintf("Expected token to be Identifier, got %T", left))
-		return nil
-	}
-
 	fmt.Println("Parsing assign expression")
 
-	assignedStmt.Identifier = left_
+	assignedStmt.Identifier = left
 
 	fmt.Println("CALLING", p.curToken, left)
 

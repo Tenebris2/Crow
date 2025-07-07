@@ -338,6 +338,10 @@ func TestAssignent(t *testing.T) {
   let a = 0;
 
   a = 1;
+
+  for a < 5 {
+    a = a + 1;
+  }
   `
 
 	evaluated := testEval(input)

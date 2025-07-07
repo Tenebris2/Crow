@@ -33,6 +33,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		name := node.Identifier
 		value := Eval(node.AssignedValue, env)
 
+		fmt.Println("value is ", value)
 		if isError(value) {
 			return value
 		}
@@ -457,11 +458,12 @@ func evalAssignment(left ast.Expression, value object.Object, env *object.Enviro
 	switch left := left.(type) {
 	case *ast.Identifier:
 		name := left.Value
+
 		if env.Get(name) != nil {
 			env.Set(name, value)
-
-			return value
 		}
+
+		return value
 	case *ast.IndexExpression:
 		return evalAssignmentIndex(Eval(left.Left, env), Eval(left.Index, env), value)
 	}

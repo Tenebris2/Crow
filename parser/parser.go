@@ -593,7 +593,7 @@ func (p *Parser) parseAssignExpression(left ast.Expression) ast.Expression {
 
 	p.nextToken() // skip to identifier
 
-	assignedStmt.AssignedValue = p.parseExpression(ASSIGN)
+	assignedStmt.AssignedValue = p.parseExpression(LOWEST)
 
 	return assignedStmt
 }

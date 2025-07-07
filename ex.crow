@@ -1,5 +1,5 @@
-let a = [5, 2, 3, 1];
-
-a[1] = 2;
-
-print(a);
+let x = 0;
+for x < 5 {
+  print(x);
+  x = x + 1;
+}

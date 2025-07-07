@@ -109,6 +109,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalIndexExpression(elements, index)
 	case *ast.LoopStatement:
 		return evalLoopStatement(node.Condition, node.StatementBlock, env)
+	case *ast.ForStatement:
+		return evalForStatement(node.Init, node.Condition, node.Post, node.StatementBlock, env)
 	default:
 		return newError("Program has no more statements to parse got %s", node)
 	}
@@ -456,6 +458,27 @@ func evalLoopStatement(condition ast.Expression, function *ast.BlockStatement, e
 				return result
 			}
 		}
+	}
+
+	return result
+}
+
+func evalForStatement(init ast.Statement, condition ast.Expression, post ast.Statement, block *ast.BlockStatement, env *object.Environment) object.Object {
+
+	var result object.Object
+	Eval(init, env)
+
+	for isTruth(Eval(condition, env)) {
+		result = Eval(block, env)
+
+		if result != nil {
+			rt := result.Type()
+			if rt == object.RETURN_VALUE_OBJECT || rt == object.ERROR_OBJECT {
+				return result
+			}
+		}
+
+		Eval(post, env) // increment
 	}
 
 	return result

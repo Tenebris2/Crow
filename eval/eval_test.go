@@ -351,3 +351,23 @@ func TestAssignment(t *testing.T) {
 	}
 	testIntegerObject(t, result, 5)
 }
+
+func TestForStatements(t *testing.T) {
+	input := `
+  let b = 0;
+  for let i = 0; i < 5; i = i + 1 {
+    b = b + 1;
+  }
+
+  b;
+  `
+
+	evaluated := testEval(input)
+	result, ok := evaluated.(*object.Integer)
+
+	if !ok {
+		t.Fatalf("object is not Integer. got=%T (%+v)", evaluated, evaluated)
+	}
+
+	testIntegerObject(t, result, 5)
+}

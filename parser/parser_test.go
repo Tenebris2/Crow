@@ -572,3 +572,27 @@ func TestAssignStatement(t *testing.T) {
 	}
 
 }
+
+func TestForStatement(t *testing.T) {
+	input := `
+  let a = 0;
+  for let i = 0; i < 5; i = i + 1 {
+    a = (a + 1);
+  }
+  a;
+ `
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserError(t, p)
+
+	stmt, ok := program.Statements[1].(*ast.ForStatement)
+
+	if !ok {
+		t.Fatalf("exp not *ast.ForStatement. got=%T", program.Statements[0])
+	}
+
+	if stmt.String() != "for let i = 0;(< i 5);i = (+ i 1){a = (+ a 1); }" {
+		t.Fatalf("stmt.String() expected 'a = 1', got %q", stmt.String())
+	}
+}

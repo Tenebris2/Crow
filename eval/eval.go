@@ -177,14 +177,6 @@ func evalBooleanExpression(val bool) object.Object {
 	return naiveBoolToBoolean(val)
 }
 
-func naiveBoolToBoolean(val bool) object.Object {
-	if val {
-		return TRUE
-	} else {
-		return FALSE
-	}
-}
-
 func evalMinusPrefixExpression(right object.Object) object.Object {
 	val, ok := right.(*object.Integer)
 
@@ -205,6 +197,8 @@ func evalInfixExpression(left object.Object, operator token.TokenType, right obj
 		return evalBooleanInfixExpression(left, operator, right)
 	case left.Type() == object.STRING_OBJECT && right.Type() == object.STRING_OBJECT:
 		return evalStringInfixExpression(left, operator, right)
+	case left.Type() == object.ARRAY_OBJECT && right.Type() == object.ARRAY_OBJECT:
+		return evalArrayInfixExpression(left, operator, right)
 	case left.Type() != right.Type():
 		return newError("type mismatch: %s %s %s", left.Type(), operator, right.Type())
 	default:
@@ -270,7 +264,21 @@ func evalStringInfixExpression(left object.Object, operator token.TokenType, rig
 			left.Type(), operator, right.Type())
 	}
 }
-
+func evalArrayInfixExpression(left object.Object, operator token.TokenType, right object.Object) object.Object {
+	leftVal := left.(*object.Array).Elements
+	rightVal := right.(*object.Array).Elements
+	switch operator {
+	case token.PLUS:
+		return &object.Array{Elements: append(leftVal, rightVal...)}
+	case token.EQUAL:
+		return compareArrays(leftVal, rightVal, operator)
+	case token.NEQUAL:
+		return compareArrays(leftVal, rightVal, operator)
+	default:
+		return newError("unknown operator: %s %s %s",
+			left.Type(), operator, right.Type())
+	}
+}
 func evalConditionalExpression(condition object.Object, thenBlock ast.Node, elseBlock ast.Node, env *object.Environment) object.Object {
 	if isTruth(condition) {
 		return Eval(thenBlock, env)
@@ -485,4 +493,47 @@ func evalAssignmentIndex(left, index, value object.Object) object.Object {
 		return newError("unsupported type for assignment: %s %s", left.Type(), index.Type())
 	}
 
+}
+
+// helper
+func naiveBoolToBoolean(val bool) object.Object {
+	if val {
+		return TRUE
+	} else {
+		return FALSE
+	}
+}
+
+func compareArrays(left, right []object.Object, tt token.TokenType) object.Object {
+	switch tt {
+	case token.EQUAL:
+		if len(left) != len(right) {
+			return FALSE
+		}
+
+		for i, e_left := range left {
+			e_right := right[i]
+			if e_left != e_right {
+				return FALSE
+			}
+		}
+
+		return TRUE
+
+	case token.NEQUAL:
+		if len(left) != len(right) {
+			return TRUE
+		}
+
+		for i, e_left := range left {
+			e_right := right[i]
+			if e_left != e_right {
+				return TRUE
+			}
+		}
+
+		return FALSE
+	default:
+		return newError("unknown operator for arrays")
+	}
 }

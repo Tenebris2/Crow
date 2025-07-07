@@ -1,5 +1,31 @@
-let x = 0;
-for x < 5 {
-  print(x);
-  x = x + 1;
+let swap = fun(a, x, y) {
 }
+
+let sort = fun(arr) {
+  let i = 0;
+  for i < len(arr) {
+    let j = 0;
+    for j < len(arr) {
+      if arr[j] > arr[i] {
+        let temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+      }
+      j = j + 1;
+    }
+
+    i = i + 1;
+  }
+
+  return arr;
+}
+
+
+
+let a = [2, 4, 1, 9, 10, 11, -2, -3, -5];
+sort(a);
+
+let b = [100, 111];
+
+a = a + b;
+print(a);

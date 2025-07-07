@@ -369,8 +369,16 @@ func (ie *IndexExpression) String() string {
 }
 
 type LoopStatement struct {
-	Token          token.Token // type: FOR
+	Token          token.Token // type: WHILE
 	Condition      Expression
+	StatementBlock *BlockStatement
+}
+
+type ForStatement struct {
+	Token          token.Token
+	Init           Statement
+	Condition      Expression
+	Post           Statement
 	StatementBlock *BlockStatement
 }
 
@@ -379,7 +387,7 @@ func (ls *LoopStatement) TokenLiteral() string { return ls.Token.Literal }
 func (ls *LoopStatement) String() string {
 	var out bytes.Buffer
 
-	out.WriteString("for ")
+	out.WriteString("while ")
 	out.WriteString(ls.Condition.String())
 	out.WriteString(" ")
 	out.WriteString(ls.StatementBlock.String())

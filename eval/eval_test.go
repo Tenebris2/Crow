@@ -318,7 +318,7 @@ func TestLoopStatements(t *testing.T) {
 	input := `
   let a = 0;
 
-  for a < 10 {
+  while a < 10 {
     let a = a + 1;
   }
 
@@ -333,13 +333,13 @@ func TestLoopStatements(t *testing.T) {
 	testIntegerObject(t, result, 10)
 }
 
-func TestAssigment(t *testing.T) {
+func TestAssignment(t *testing.T) {
 	input := `
   let a = 0;
 
   a = 1;
 
-  for a < 5 {
+  while a < 5 {
     a = a + 1;
   }
   `

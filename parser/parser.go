@@ -218,7 +218,7 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseReturnStatement()
 	case token.LBRACE:
 		return p.parseBlockStatement()
-	case token.FOR:
+	case token.WHILE:
 		return p.parseLoopStatement()
 	case token.SEMICOLON:
 		return nil

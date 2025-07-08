@@ -224,6 +224,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseLoopStatement()
 	case token.FOR:
 		return p.parseForStatement()
+	case token.CONTINUE, token.BREAK:
+		return p.parseControlFlowSignalStatement()
 	case token.SEMICOLON:
 		return nil
 	default:
@@ -642,4 +644,13 @@ func (p *Parser) parseForStatement() ast.Statement {
 	fmt.Println("BLOCK", forStmt.Post, forStmt.StatementBlock)
 
 	return forStmt
+}
+
+func (p *Parser) parseControlFlowSignalStatement() ast.Statement {
+	cfs := &ast.ControlFlowSignalStatement{Token: p.curToken}
+
+	if !p.expectPeek(token.SEMICOLON) {
+		return nil
+	}
+	return cfs
 }

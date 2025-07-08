@@ -26,6 +26,8 @@ return false;
 [1, 2];
 while 
 for
+break
+continue
 `
 	tests := []struct {
 		expectedType    token.TokenType
@@ -122,6 +124,8 @@ for
 		{token.SEMICOLON, ";"},
 		{token.WHILE, "while"},
 		{token.FOR, "for"},
+		{token.BREAK, "break"},
+		{token.CONTINUE, "continue"},
 		{token.EOF, ""},
 	}
 

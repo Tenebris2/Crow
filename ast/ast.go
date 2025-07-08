@@ -428,3 +428,13 @@ func (fs *ForStatement) String() string {
 
 	return out.String()
 }
+
+type ControlFlowSignalStatement struct {
+	Token token.Token
+}
+
+func (cf *ControlFlowSignalStatement) statementNode()       {}
+func (cf *ControlFlowSignalStatement) TokenLiteral() string { return cf.Token.Literal }
+func (cf *ControlFlowSignalStatement) String() string {
+	return cf.Token.Literal
+}

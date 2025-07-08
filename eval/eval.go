@@ -8,9 +8,11 @@ import (
 )
 
 var (
-	NULL  = &object.Null{}
-	TRUE  = &object.Boolean{Value: true}
-	FALSE = &object.Boolean{Value: false}
+	NULL            = &object.Null{}
+	TRUE            = &object.Boolean{Value: true}
+	FALSE           = &object.Boolean{Value: false}
+	BREAK_SIGNAL    = &object.BreakSignal{}
+	CONTINUE_SIGNAL = &object.ContinueSignal{}
 )
 
 func Eval(node ast.Node, env *object.Environment) object.Object {
@@ -111,6 +113,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalLoopStatement(node.Condition, node.StatementBlock, env)
 	case *ast.ForStatement:
 		return evalForStatement(node.Init, node.Condition, node.Post, node.StatementBlock, env)
+	case *ast.ControlFlowSignalStatement:
+		return evalControlFlowSignalStatement(node.Token.Type)
 	default:
 		return newError("Program has no more statements to parse got %s", node)
 	}
@@ -142,7 +146,7 @@ func evalBlockStatement(statements []ast.Statement, env *object.Environment) obj
 
 		if result != nil {
 			rt := result.Type()
-			if rt == object.RETURN_VALUE_OBJECT || rt == object.ERROR_OBJECT {
+			if rt == object.RETURN_VALUE_OBJECT || rt == object.ERROR_OBJECT || rt == object.BREAK_SIGNAL_OBJECT {
 				return result
 			}
 		}
@@ -423,7 +427,6 @@ func evalIndexExpression(left, index object.Object) object.Object {
 	switch left := left.(type) {
 	case *object.Array:
 		if index, ok := index.(*object.Integer); ok {
-			fmt.Println("Yo what is up", &left.Elements[index.Value])
 			return left.Elements[index.Value]
 		} else {
 			return newError("index type is not of type INTEGER, got type %s instead", index.Type())
@@ -448,14 +451,20 @@ func unwrapReturnValue(obj object.Object) object.Object {
 func evalLoopStatement(condition ast.Expression, function *ast.BlockStatement, env *object.Environment) object.Object {
 
 	var result object.Object
-
+Loop:
 	for isTruth(Eval(condition, env)) {
 		result = Eval(function, env)
 
 		if result != nil {
 			rt := result.Type()
-			if rt == object.RETURN_VALUE_OBJECT || rt == object.ERROR_OBJECT {
+			switch rt {
+			case object.RETURN_VALUE_OBJECT, object.ERROR_OBJECT:
 				return result
+			case object.BREAK_SIGNAL_OBJECT:
+				break Loop
+			case object.CONTINUE_SIGNAL_OBJECT:
+				continue Loop
+
 			}
 		}
 	}
@@ -467,14 +476,20 @@ func evalForStatement(init ast.Statement, condition ast.Expression, post ast.Sta
 
 	var result object.Object
 	Eval(init, env)
-
+Loop:
 	for isTruth(Eval(condition, env)) {
 		result = Eval(block, env)
 
 		if result != nil {
 			rt := result.Type()
-			if rt == object.RETURN_VALUE_OBJECT || rt == object.ERROR_OBJECT {
+
+			switch rt {
+			case object.RETURN_VALUE_OBJECT, object.ERROR_OBJECT:
 				return result
+			case object.BREAK_SIGNAL_OBJECT:
+				break Loop
+			case object.CONTINUE_SIGNAL_OBJECT:
+				continue Loop
 			}
 		}
 
@@ -516,6 +531,17 @@ func evalAssignmentIndex(left, index, value object.Object) object.Object {
 		return newError("unsupported type for assignment: %s %s", left.Type(), index.Type())
 	}
 
+}
+
+func evalControlFlowSignalStatement(signal token.TokenType) object.Object {
+	switch signal {
+	case token.BREAK:
+		return BREAK_SIGNAL
+	case token.CONTINUE:
+		return CONTINUE_SIGNAL
+	default:
+		return newError("Error in evaluating control flow signals")
+	}
 }
 
 // helper

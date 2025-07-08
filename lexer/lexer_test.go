@@ -24,7 +24,10 @@ return false;
 "foobar"
 "foo bar"
 [1, 2];
-for 
+while 
+for
+break
+continue
 `
 	tests := []struct {
 		expectedType    token.TokenType
@@ -119,7 +122,10 @@ for
 		{token.INT, "2"},
 		{token.RBRACKET, "]"},
 		{token.SEMICOLON, ";"},
+		{token.WHILE, "while"},
 		{token.FOR, "for"},
+		{token.BREAK, "break"},
+		{token.CONTINUE, "continue"},
 		{token.EOF, ""},
 	}
 

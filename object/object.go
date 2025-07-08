@@ -14,15 +14,17 @@ type Object interface {
 }
 
 const (
-	INTEGER_OBJECT      = "INTEGER"
-	BOOLEAN_OBJECT      = "BOOLEAN"
-	NULL_OBJECT         = "NULL"
-	RETURN_VALUE_OBJECT = "RETURN"
-	FUNCTION_OBJECT     = "FUNCTION"
-	ERROR_OBJECT        = "ERROR"
-	STRING_OBJECT       = "STRING"
-	BUILTIN_OBJECT      = "BUILTIN"
-	ARRAY_OBJECT        = "ARRAY"
+	INTEGER_OBJECT         = "INTEGER"
+	BOOLEAN_OBJECT         = "BOOLEAN"
+	NULL_OBJECT            = "NULL"
+	RETURN_VALUE_OBJECT    = "RETURN"
+	FUNCTION_OBJECT        = "FUNCTION"
+	ERROR_OBJECT           = "ERROR"
+	STRING_OBJECT          = "STRING"
+	BUILTIN_OBJECT         = "BUILTIN"
+	ARRAY_OBJECT           = "ARRAY"
+	BREAK_SIGNAL_OBJECT    = "BREAK"
+	CONTINUE_SIGNAL_OBJECT = "CONTINUE"
 )
 
 type Integer struct {
@@ -150,4 +152,26 @@ func (a *Array) Inspect() string {
 
 	out.WriteString("]")
 	return out.String()
+}
+
+type BreakSignal struct {
+}
+
+func (bs *BreakSignal) Type() ObjectType {
+	return BREAK_SIGNAL_OBJECT
+}
+
+func (bs *BreakSignal) Inspect() string {
+	return "break"
+}
+
+type ContinueSignal struct {
+}
+
+func (cs *ContinueSignal) Type() ObjectType {
+	return CONTINUE_SIGNAL_OBJECT
+}
+
+func (cs *ContinueSignal) Inspect() string {
+	return "continue"
 }

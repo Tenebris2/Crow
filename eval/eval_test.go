@@ -318,7 +318,7 @@ func TestLoopStatements(t *testing.T) {
 	input := `
   let a = 0;
 
-  for a < 10 {
+  while a < 10 {
     let a = a + 1;
   }
 
@@ -333,13 +333,13 @@ func TestLoopStatements(t *testing.T) {
 	testIntegerObject(t, result, 10)
 }
 
-func TestAssigment(t *testing.T) {
+func TestAssignment(t *testing.T) {
 	input := `
   let a = 0;
 
   a = 1;
 
-  for a < 5 {
+  while a < 5 {
     a = a + 1;
   }
   `
@@ -349,5 +349,25 @@ func TestAssigment(t *testing.T) {
 	if !ok {
 		t.Fatalf("object is not Integer. got=%T (%+v)", evaluated, evaluated)
 	}
+	testIntegerObject(t, result, 5)
+}
+
+func TestForStatements(t *testing.T) {
+	input := `
+  let b = 0;
+  for let i = 0; i < 5; i = i + 1 {
+    b = b + 1;
+  }
+
+  b;
+  `
+
+	evaluated := testEval(input)
+	result, ok := evaluated.(*object.Integer)
+
+	if !ok {
+		t.Fatalf("object is not Integer. got=%T (%+v)", evaluated, evaluated)
+	}
+
 	testIntegerObject(t, result, 5)
 }

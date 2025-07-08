@@ -193,6 +193,8 @@ func (p *Parser) ParseProgram() *ast.Program {
 
 		p.nextToken()
 	}
+
+	fmt.Println("Parsing program statement", len(program.Statements), program.Statements)
 	return program
 }
 
@@ -218,8 +220,12 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseReturnStatement()
 	case token.LBRACE:
 		return p.parseBlockStatement()
-	case token.FOR:
+	case token.WHILE:
 		return p.parseLoopStatement()
+	case token.FOR:
+		return p.parseForStatement()
+	case token.CONTINUE, token.BREAK:
+		return p.parseControlFlowSignalStatement()
 	case token.SEMICOLON:
 		return nil
 	default:
@@ -590,10 +596,61 @@ func (p *Parser) parseAssignExpression(left ast.Expression) ast.Expression {
 	assignedStmt.Identifier = left
 
 	fmt.Println("CALLING", p.curToken, left)
-
 	p.nextToken() // skip to identifier
 
 	assignedStmt.AssignedValue = p.parseExpression(LOWEST)
 
 	return assignedStmt
+}
+
+func (p *Parser) parseForStatement() ast.Statement {
+	forStmt := &ast.ForStatement{Token: p.curToken}
+
+	p.nextToken()
+
+	forStmt.Init = p.parseStatement() // ex: let i = 0;
+
+	fmt.Println("NEXT! 1203391203921093012930129302", forStmt.Init)
+	if !p.expectPeek(token.SEMICOLON) {
+		return nil
+	}
+
+	p.nextToken()
+	forStmt.Condition = p.parseExpression(LOWEST)
+
+	fmt.Println("NEXT! Condition", p.curToken, p.peekToken)
+
+	if !p.expectPeek(token.SEMICOLON) {
+		return nil
+	}
+
+	p.nextToken()
+
+	fmt.Println("NEXT! Post", p.curToken, p.peekToken)
+
+	forStmt.Post = p.parseStatement()
+
+	fmt.Println("POST", forStmt.Post)
+
+	p.nextToken()
+
+	if !p.curTokenIs(token.LBRACE) {
+		p.reportError(fmt.Sprintf("Expected } got %s", p.curToken))
+		return nil
+	}
+
+	forStmt.StatementBlock = p.parseBlockStatement()
+
+	fmt.Println("BLOCK", forStmt.Post, forStmt.StatementBlock)
+
+	return forStmt
+}
+
+func (p *Parser) parseControlFlowSignalStatement() ast.Statement {
+	cfs := &ast.ControlFlowSignalStatement{Token: p.curToken}
+
+	if !p.expectPeek(token.SEMICOLON) {
+		return nil
+	}
+	return cfs
 }

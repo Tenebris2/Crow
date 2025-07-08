@@ -369,7 +369,7 @@ func (ie *IndexExpression) String() string {
 }
 
 type LoopStatement struct {
-	Token          token.Token // type: FOR
+	Token          token.Token // type: WHILE
 	Condition      Expression
 	StatementBlock *BlockStatement
 }
@@ -379,7 +379,7 @@ func (ls *LoopStatement) TokenLiteral() string { return ls.Token.Literal }
 func (ls *LoopStatement) String() string {
 	var out bytes.Buffer
 
-	out.WriteString("for ")
+	out.WriteString("while ")
 	out.WriteString(ls.Condition.String())
 	out.WriteString(" ")
 	out.WriteString(ls.StatementBlock.String())
@@ -403,4 +403,38 @@ func (ls *AssignExpression) String() string {
 	out.WriteString(ls.AssignedValue.String())
 
 	return out.String()
+}
+
+type ForStatement struct {
+	Token          token.Token
+	Init           Statement
+	Condition      Expression
+	Post           Statement
+	StatementBlock *BlockStatement
+}
+
+func (fs *ForStatement) statementNode()       {}
+func (fs *ForStatement) TokenLiteral() string { return fs.Token.Literal }
+func (fs *ForStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("for ")
+	out.WriteString(fs.Init.String())
+	out.WriteString(";")
+	out.WriteString(fs.Condition.String())
+	out.WriteString(";")
+	out.WriteString(fs.Post.String())
+	out.WriteString(fs.StatementBlock.String())
+
+	return out.String()
+}
+
+type ControlFlowSignalStatement struct {
+	Token token.Token
+}
+
+func (cf *ControlFlowSignalStatement) statementNode()       {}
+func (cf *ControlFlowSignalStatement) TokenLiteral() string { return cf.Token.Literal }
+func (cf *ControlFlowSignalStatement) String() string {
+	return cf.Token.Literal
 }

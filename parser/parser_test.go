@@ -540,7 +540,7 @@ func TestIndexArray(t *testing.T) {
 
 func TestLoopStatement(t *testing.T) {
 	input := `
-  for a > 9 {
+  while a > 9 {
     let a = a + 1
   }
   `
@@ -550,8 +550,8 @@ func TestLoopStatement(t *testing.T) {
 	checkParserError(t, p)
 
 	stmt, _ := program.Statements[0].(*ast.LoopStatement)
-	if stmt.String() != "for (> a 9) {let a = (+ a 1); }" {
-		t.Fatalf("stmt.String() expected 'for (> a 9) {let a = (+ a 1); }', got %q", stmt.String())
+	if stmt.String() != "while (> a 9) {let a = (+ a 1); }" {
+		t.Fatalf("stmt.String() expected 'while (> a 9) {let a = (+ a 1); }', got %q", stmt.String())
 	}
 
 }
@@ -571,4 +571,28 @@ func TestAssignStatement(t *testing.T) {
 		t.Fatalf("stmt.String() expected 'a = 1', got %q", stmt.String())
 	}
 
+}
+
+func TestForStatement(t *testing.T) {
+	input := `
+  let a = 0;
+  for let i = 0; i < 5; i = i + 1 {
+    a = (a + 1);
+  }
+  a;
+ `
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserError(t, p)
+
+	stmt, ok := program.Statements[1].(*ast.ForStatement)
+
+	if !ok {
+		t.Fatalf("exp not *ast.ForStatement. got=%T", program.Statements[0])
+	}
+
+	if stmt.String() != "for let i = 0;(< i 5);i = (+ i 1){a = (+ a 1); }" {
+		t.Fatalf("stmt.String() expected 'a = 1', got %q", stmt.String())
+	}
 }

@@ -55,6 +55,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.IF, p.parseConditionalExpression)
 	p.registerPrefix(token.FUNCTION, p.parseFunctionExpression)
 	p.registerPrefix(token.LBRACKET, p.parseArrayExpression)
+	p.registerPrefix(token.LBRACE, p.parseMapExpression)
 
 	p.registerPrefixOperators(token.PLUS)
 	p.registerPrefixOperators(token.MINUS)
@@ -238,6 +239,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 
 	prefix := p.prefixParseFns[p.curToken.Type]
 
+	fmt.Println("Parsing prefix: ", p.curToken.Type, p.curToken.Literal)
 	if prefix == nil {
 		return nil
 	}
@@ -653,4 +655,54 @@ func (p *Parser) parseControlFlowSignalStatement() ast.Statement {
 		return nil
 	}
 	return cfs
+}
+func (p *Parser) parseMapExpression() ast.Expression {
+	// let a = {"x": 5, "y": 7};
+	cfs := &ast.MapLiteral{Token: p.curToken} // {
+
+	p.nextToken() // consume '{'
+
+	cfs.Map = p.parseMapKeyValues()
+
+	return cfs
+}
+
+func (p *Parser) parseMapKeyValues() map[ast.Expression]ast.Expression {
+	m := make(map[ast.Expression]ast.Expression) // currently at first expression already
+
+	// now p.curToken = EXPRESSION
+	// need to parse p.curToken = EXPRESSION, p.peekToken = ":", then next another expression
+
+	if p.curTokenIs(token.RBRACE) {
+		p.nextToken()
+		return m
+	}
+
+	// at this line of code, p.curToken is at first expression
+
+	p.parseSingularMapKeyValue(m) // parse the expression
+	// after this, it goes to comma
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		p.parseSingularMapKeyValue(m)
+	}
+
+	p.nextToken() // consume RBRACE
+
+	return m
+}
+
+func (p *Parser) parseSingularMapKeyValue(m map[ast.Expression]ast.Expression) {
+	key := p.parseExpression(LOWEST)
+
+	p.nextToken() // consumes expression
+	fmt.Println("After consuming expression: ", p.curToken)
+	p.nextToken() // consume :
+	fmt.Println("After consuming ':': ", p.curToken)
+
+	value := p.parseExpression(LOWEST)
+
+	m[key] = value
 }

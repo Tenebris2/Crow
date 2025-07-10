@@ -115,6 +115,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalForStatement(node.Init, node.Condition, node.Post, node.StatementBlock, env)
 	case *ast.ControlFlowSignalStatement:
 		return evalControlFlowSignalStatement(node.Token.Type)
+	case *ast.MapLiteral:
+		return evalMapExpression(node.Map, env)
 	default:
 		return newError("Program has no more statements to parse got %s", node)
 	}
@@ -554,35 +556,43 @@ func naiveBoolToBoolean(val bool) object.Object {
 }
 
 func compareArrays(left, right []object.Object, tt token.TokenType) object.Object {
+	isEqual := len(left) == len(right)
+
+	if isEqual {
+		for i := range left {
+			if left[i] != right[i] {
+				isEqual = false
+				break
+			}
+		}
+	}
+
 	switch tt {
 	case token.EQUAL:
-		if len(left) != len(right) {
-			return FALSE
-		}
-
-		for i, e_left := range left {
-			e_right := right[i]
-			if e_left != e_right {
-				return FALSE
-			}
-		}
-
-		return TRUE
-
-	case token.NEQUAL:
-		if len(left) != len(right) {
+		if isEqual {
 			return TRUE
 		}
-
-		for i, e_left := range left {
-			e_right := right[i]
-			if e_left != e_right {
-				return TRUE
-			}
+		return FALSE
+	case token.NEQUAL:
+		if !isEqual {
+			return TRUE
 		}
-
 		return FALSE
 	default:
-		return newError("unknown operator for arrays")
+		return newError("unknown operator for arrays: %s", tt)
 	}
+}
+func evalMapExpression(m map[ast.Expression]ast.Expression, env *object.Environment) object.Object {
+	mapObj := &object.Map{}
+
+	pairs := make(map[object.Object]object.Object)
+
+	for keyExpr, valExpr := range m {
+		keyObj := Eval(keyExpr, env)
+		valObj := Eval(valExpr, env)
+		pairs[keyObj] = valObj
+	}
+
+	mapObj.Pairs = pairs
+	return mapObj
 }

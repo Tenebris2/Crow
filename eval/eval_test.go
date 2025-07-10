@@ -371,3 +371,18 @@ func TestForStatements(t *testing.T) {
 
 	testIntegerObject(t, result, 5)
 }
+
+func TestMapExpression(t *testing.T) {
+	input := `
+  let a = {"x": 1, "y": 2};
+
+  a;
+  `
+
+	evaluated := testEval(input)
+	_, ok := evaluated.(*object.Map)
+
+	if !ok {
+		t.Fatalf("object is not Map. got=%T (%+v)", evaluated, evaluated)
+	}
+}

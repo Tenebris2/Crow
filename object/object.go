@@ -25,6 +25,7 @@ const (
 	ARRAY_OBJECT           = "ARRAY"
 	BREAK_SIGNAL_OBJECT    = "BREAK"
 	CONTINUE_SIGNAL_OBJECT = "CONTINUE"
+	MAP_OBJECT             = "MAP"
 )
 
 type Integer struct {
@@ -174,4 +175,27 @@ func (cs *ContinueSignal) Type() ObjectType {
 
 func (cs *ContinueSignal) Inspect() string {
 	return "continue"
+}
+
+type Map struct {
+	Pairs map[Object]Object
+}
+
+func (m *Map) Type() ObjectType {
+	return MAP_OBJECT
+}
+
+func (m *Map) Inspect() string {
+	var out bytes.Buffer
+
+	out.WriteString("{")
+	for k, v := range m.Pairs {
+		out.WriteString(k.Inspect())
+		out.WriteString(":")
+		out.WriteString(v.Inspect())
+		out.WriteString(", ")
+	}
+
+	out.WriteString("}")
+	return out.String()
 }

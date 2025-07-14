@@ -28,6 +28,7 @@ while
 for
 break
 continue
+map
 `
 	tests := []struct {
 		expectedType    token.TokenType
@@ -126,6 +127,7 @@ continue
 		{token.FOR, "for"},
 		{token.BREAK, "break"},
 		{token.CONTINUE, "continue"},
+		{token.MAP, "map"},
 		{token.EOF, ""},
 	}
 

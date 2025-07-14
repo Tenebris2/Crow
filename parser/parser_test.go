@@ -596,3 +596,22 @@ func TestForStatement(t *testing.T) {
 		t.Fatalf("stmt.String() expected 'a = 1', got %q", stmt.String())
 	}
 }
+func TestMapExpression(t *testing.T) {
+	input := `
+  let a = {"x": 5, "y"; 6};
+ `
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserError(t, p)
+
+	stmt, ok := program.Statements[0].(*ast.LetStatement)
+
+	if !ok {
+		t.Fatalf("exp not *ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
+	if stmt.String() != "let a = {x:5, y:6, }" {
+		t.Fatalf("stmt.String() expected 'let a = {x:5, y:6, }', got %q", stmt.String())
+	}
+}

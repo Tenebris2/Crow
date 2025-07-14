@@ -438,3 +438,27 @@ func (cf *ControlFlowSignalStatement) TokenLiteral() string { return cf.Token.Li
 func (cf *ControlFlowSignalStatement) String() string {
 	return cf.Token.Literal
 }
+
+type MapLiteral struct {
+	Token token.Token // {
+	Map   map[Expression]Expression
+}
+
+func (ml *MapLiteral) expressionNode()      {}
+func (ml *MapLiteral) TokenLiteral() string { return ml.Token.Literal }
+func (ml *MapLiteral) String() string {
+	// let a = map[int]
+	var out bytes.Buffer
+
+	out.WriteString("{")
+	for k, v := range ml.Map {
+		out.WriteString(k.String())
+		out.WriteString(":")
+		out.WriteString(v.String())
+		out.WriteString(", ")
+	}
+
+	out.WriteString("}")
+	return out.String()
+
+}

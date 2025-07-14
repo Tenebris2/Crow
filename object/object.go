@@ -4,14 +4,9 @@ import (
 	"bytes"
 	"crow/ast"
 	"fmt"
+	"hash/fnv"
 	"strings"
 )
-
-type ObjectType string
-type Object interface {
-	Type() ObjectType
-	Inspect() string
-}
 
 const (
 	INTEGER_OBJECT         = "INTEGER"
@@ -28,6 +23,20 @@ const (
 	MAP_OBJECT             = "MAP"
 )
 
+type HashKey struct {
+	Type  ObjectType
+	Value uint64
+}
+
+type Hashable interface {
+	HashKey() HashKey
+}
+type ObjectType string
+type Object interface {
+	Type() ObjectType
+	Inspect() string
+}
+
 type Integer struct {
 	Value int64
 }
@@ -40,6 +49,10 @@ func (i *Integer) Inspect() string {
 	return fmt.Sprintf("%d", i.Value)
 }
 
+func (i *Integer) HashKey() HashKey {
+	return HashKey{Type: INTEGER_OBJECT, Value: uint64(i.Value)}
+}
+
 type Boolean struct {
 	Value bool
 }
@@ -50,6 +63,25 @@ func (b *Boolean) Type() ObjectType {
 
 func (b *Boolean) Inspect() string {
 	return fmt.Sprintf("%t", b.Value)
+}
+func (b *Boolean) HashKey() HashKey {
+	var value uint64
+
+	if b.Value {
+		value = 1
+	} else {
+		value = 0
+	}
+
+	return HashKey{Type: BOOLEAN_OBJECT, Value: value}
+}
+
+func (s *String) HashKey() HashKey {
+	h := fnv.New64a()
+
+	h.Write([]byte(s.Value))
+
+	return HashKey{Type: STRING_OBJECT, Value: h.Sum64()}
 }
 
 type Null struct {
@@ -178,7 +210,7 @@ func (cs *ContinueSignal) Inspect() string {
 }
 
 type Map struct {
-	Pairs map[Object]Object
+	Pairs map[HashKey]Object
 }
 
 func (m *Map) Type() ObjectType {
@@ -190,7 +222,7 @@ func (m *Map) Inspect() string {
 
 	out.WriteString("{")
 	for k, v := range m.Pairs {
-		out.WriteString(k.Inspect())
+		out.WriteString(string(k.Type))
 		out.WriteString(":")
 		out.WriteString(v.Inspect())
 		out.WriteString(", ")

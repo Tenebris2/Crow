@@ -439,8 +439,10 @@ func evalIndexExpression(left, index object.Object) object.Object {
 		} else {
 			return newError("index type is not of type INTEGER, got type %s instead", index.Type())
 		}
+	case *object.Map:
+		return left.Pairs[index.(object.Hashable).HashKey()]
 	default:
-		return newError("unsupported type: %s %s", left.Type(), index.Type())
+		return newError("unsupported type: %s", left.Type())
 	}
 }
 func unwrapReturnValue(obj object.Object) object.Object {
@@ -585,12 +587,12 @@ func compareArrays(left, right []object.Object, tt token.TokenType) object.Objec
 func evalMapExpression(m map[ast.Expression]ast.Expression, env *object.Environment) object.Object {
 	mapObj := &object.Map{}
 
-	pairs := make(map[object.Object]object.Object)
+	pairs := make(map[object.HashKey]object.Object)
 
 	for keyExpr, valExpr := range m {
-		keyObj := Eval(keyExpr, env)
+		keyObj := Eval(keyExpr, env).(object.Hashable)
 		valObj := Eval(valExpr, env)
-		pairs[keyObj] = valObj
+		pairs[keyObj.HashKey()] = valObj
 	}
 
 	mapObj.Pairs = pairs

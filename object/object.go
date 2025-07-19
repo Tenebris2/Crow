@@ -209,8 +209,12 @@ func (cs *ContinueSignal) Inspect() string {
 	return "continue"
 }
 
+type HashPair struct {
+	Key   Object
+	Value Object
+}
 type Map struct {
-	Pairs map[HashKey]Object
+	Pairs map[HashKey]HashPair
 }
 
 func (m *Map) Type() ObjectType {
@@ -221,10 +225,11 @@ func (m *Map) Inspect() string {
 	var out bytes.Buffer
 
 	out.WriteString("{")
-	for k, v := range m.Pairs {
-		out.WriteString(string(k.Type))
+	for _, v := range m.Pairs {
+		key, value := v.Key, v.Value
+		out.WriteString(key.Inspect())
 		out.WriteString(":")
-		out.WriteString(v.Inspect())
+		out.WriteString(value.Inspect())
 		out.WriteString(", ")
 	}
 

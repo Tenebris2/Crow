@@ -218,6 +218,7 @@ func (m *Map) Type() ObjectType {
 }
 
 func (m *Map) Inspect() string {
+	// todo: turn Map so that can inspect both key and value
 	var out bytes.Buffer
 
 	out.WriteString("{")

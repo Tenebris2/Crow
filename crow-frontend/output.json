@@ -1,0 +1,73 @@
+{
+  "statements": [
+    {
+      "token": {
+        "Type": "LET",
+        "Literal": "let"
+      },
+      "name": {
+        "token": {
+          "Type": "IDENT",
+          "Literal": "a"
+        },
+        "value": "a"
+      },
+      "value": {
+        "token": {
+          "Type": "{",
+          "Literal": "{"
+        },
+        "map": {
+          "x": {
+            "token": {
+              "Type": "INT",
+              "Literal": "5"
+            },
+            "value": 5
+          }
+        }
+      }
+    },
+    {
+      "token": {
+        "Type": "IDENT",
+        "Literal": "print"
+      },
+      "expression": {
+        "token": {
+          "Type": "(",
+          "Literal": "("
+        },
+        "function": {
+          "token": {
+            "Type": "IDENT",
+            "Literal": "print"
+          },
+          "value": "print"
+        },
+        "arguments": [
+          {
+            "token": {
+              "Type": "[",
+              "Literal": "["
+            },
+            "left": {
+              "token": {
+                "Type": "IDENT",
+                "Literal": "a"
+              },
+              "value": "a"
+            },
+            "index": {
+              "token": {
+                "Type": "STRING",
+                "Literal": "x"
+              },
+              "value": "x"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

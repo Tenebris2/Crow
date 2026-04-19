@@ -6,6 +6,7 @@ import (
 	"crow/object"
 	"crow/parser"
 	"crow/repl"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/user"
@@ -41,10 +42,22 @@ func main() {
 		p := parser.New(l)
 
 		program := p.ParseProgram()
+
 		for _, msg := range p.Errors() {
 			fmt.Println(msg)
 		}
 
+		jsonData, err := json.MarshalIndent(program, "", "  ")
+		if err != nil {
+			panic(err)
+		}
+
+		err = os.WriteFile("output.json", jsonData, 0644)
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println("AST written to output.json")
 		eval.Eval(program, env)
 	}
 

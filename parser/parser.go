@@ -236,35 +236,23 @@ func (p *Parser) parseStatement() ast.Statement {
 
 // parse statements
 func (p *Parser) parseExpression(precedence int) ast.Expression {
-
 	prefix := p.prefixParseFns[p.curToken.Type]
-
-	fmt.Println("Parsing prefix: ", p.curToken.Type, p.curToken.Literal)
 	if prefix == nil {
 		return nil
 	}
-
 	leftExp := prefix()
-
-	fmt.Println("Parsing prefix: ", leftExp)
 	// precedence example:
 	// a + b * c;
 
 	// prefix identifier a, infix, left = a, operator = +, now at b,
 
 	for !p.curTokenIs(token.SEMICOLON) && precedence < p.getCurrentPrecedence() {
-
 		peekExp := p.peekToken
-
 		infix := p.infixParseFns[peekExp.Type]
-
 		if infix == nil {
 			return leftExp
 		}
-
-		fmt.Println("Parsing infix of type ", peekExp.Type)
 		p.nextToken()
-
 		leftExp = infix(leftExp)
 	}
 
@@ -487,39 +475,29 @@ func (p *Parser) parseFunctionArguments() []ast.Expression {
 
 func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 	args := []*ast.Identifier{}
-
 	if p.peekTokenIs(token.RPAREN) {
 		p.nextToken()
 		return args
 	}
-
 	p.nextToken() // skip to identifier
 	exp := p.parseExpression(LOWEST)
-
 	id, ok := exp.(*ast.Identifier)
-
 	if !ok {
 		p.reportError(fmt.Sprintf("Expected next token to be Identifier, got %s", exp))
 		return nil
 	}
-
 	args = append(args, id)
 
 	for p.peekTokenIs(token.COMMA) {
 		p.nextToken()
 		p.nextToken()
-
 		exp := p.parseExpression(LOWEST)
-
 		id, ok := exp.(*ast.Identifier)
-
 		if !ok {
 			p.reportError(fmt.Sprintf("Expected next token to be Identifier, got %s", exp))
 			return nil
 		}
-
 		args = append(args, id)
-
 	}
 
 	p.nextToken() // consume LPAREN
@@ -592,36 +570,21 @@ func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 
 func (p *Parser) parseAssignExpression(left ast.Expression) ast.Expression {
 	assignedStmt := &ast.AssignExpression{Token: p.curToken}
-
-	fmt.Println("Parsing assign expression")
-
 	assignedStmt.Identifier = left
-
-	fmt.Println("CALLING", p.curToken, left)
 	p.nextToken() // skip to identifier
-
 	assignedStmt.AssignedValue = p.parseExpression(LOWEST)
-
 	return assignedStmt
 }
 
 func (p *Parser) parseForStatement() ast.Statement {
 	forStmt := &ast.ForStatement{Token: p.curToken}
-
 	p.nextToken()
-
 	forStmt.Init = p.parseStatement() // ex: let i = 0;
-
-	fmt.Println("NEXT! 1203391203921093012930129302", forStmt.Init)
 	if !p.expectPeek(token.SEMICOLON) {
 		return nil
 	}
-
 	p.nextToken()
 	forStmt.Condition = p.parseExpression(LOWEST)
-
-	fmt.Println("NEXT! Condition", p.curToken, p.peekToken)
-
 	if !p.expectPeek(token.SEMICOLON) {
 		return nil
 	}
